@@ -72,14 +72,13 @@ missing_dates = [pd.Timestamp('1986-4-1'), pd.Timestamp('1986-5-1'),
 WANDB_API_KEY = 'YOUR-KEY-HERE'
 # Absolute path to store wandb generated files (folder must exist)
 #   Note: user must have write access
-WANDB_DIR = '/path/to/wandb/dir'
+WANDB_DIR = '/wandb/'
 # Absolute path to wandb config dir (
-WANDB_CONFIG_DIR = '/path/to/wandb/config/dir'
-WANDB_CACHE_DIR = '/path/to/wandb/cache/dir'
+WANDB_CONFIG_DIR = ''
+WANDB_CACHE_DIR = '/wandb/.cache/'
 
 ###############################################################################
 ### ECMWF details
 ###############################################################################
-
 ECMWF_API_KEY = 'YOUR-KEY-HERE'
 ECMWF_API_EMAIL = 'YOUR-KEY-HERE'

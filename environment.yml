@@ -24,6 +24,7 @@ dependencies:
   - plotly=4.5
   - cdsapi=0.1
   - wandb=0.11
+  - wget
   - requests=2.25
   - pip=19
   - pip:

@@ -193,6 +193,7 @@ dependencies:
   - watchdog=0.10.3=py37_0
   - werkzeug=1.0.1=py_0
   - wheel=0.35.1=py_0
+  - wget
   - wrapt=1.12.1=py37h7b6447c_1
   - xarray=0.16.2=pyhd8ed1ab_0
   - xxhash=0.8.0=h7f98852_3
