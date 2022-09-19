@@ -1,0 +1,33 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: train-icenet
+spec:
+  template:
+    spec:
+      hostIPC: true
+      containers:
+      - name: icenetcontainer
+        image: "halyjo/icenetimage:madeonmac-v01"
+        workingDir: /storage/experiments/icenet/
+        command: ["/bin/bash", "-c"]
+        args: ["source activate icenet && ./train_models.sh"]
+        stdin: true
+        tty: true
+        env: 
+        - name: "WANDB_API_KEY"
+          value: c5322a72504a88ce9a6a4e0711250af4efd42604
+        volumeMounts:
+        - name: storage
+          mountPath: /storage
+        # - name: .cdsapirc
+        #   mountPath: ~/.cdsapirc
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: storage
+      # - name: .cdsapirc
+      #   persistentVolumeClaim:
+      #     claimName: .cdsapirc
+      restartPolicy: OnFailure
+  backoffLimit: 0
