@@ -65,7 +65,16 @@ download_dict = {
     "MRI-ESM2-0": {
         "experiment_ids": ["historical", "ssp245"],
         # 'data_nodes': ['esgf-data2.diasjp.net'],
-        "data_nodes": ["esgf-data2.diasjp.net"],
+        "data_nodes": (
+            "esg1.umr-cnrm.fr",
+            "vesg.ipsl.upmc.fr",
+            "esgf3.dkrz.de",
+            "esgf.bsc.es",
+            "esgf-data.csc.fi",
+            "noresg.nird.sigma2.no",
+            "esgf-data.ucar.edu",
+            "esgf-data2.diasjp.net",
+        ),
         "frequency": "mon",
         "variable_dict": {
             "siconca": {"include": True, "table_id": "SImon", "plevels": None},
