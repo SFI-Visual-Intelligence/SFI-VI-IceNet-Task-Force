@@ -1,0 +1,50 @@
+Python 3.7.6
+-----------------
+getting started
+Generating active grid cell region & and masks
+
+Generating NSIDC Arctic sea region array
+
+Generating polar hole masks
+
+
+Done.
+icenet/gen_masks.py finished
+-----------------
+-----------------
+Downloading OSI-450 monthly averages... Done in 32.0m:28s.
+
+ 
+Downloading OSI-430-b monthly averages... Done in 6.0m:15s.
+
+ 
+Concatenating... Done in 0.0m:0s.
+
+ 
+Preprocessing the SIC data:
+Done in 25.0m:1s.
+
+ 
+icenet/download_sic_data.py finished
+-----------------
+-----------------
+download_era5_data_in_parallel.sh finished
+-----------------
+-----------------
+download_cmip6_data_in_parallel.sh finished
+-----------------
+-----------------
+rotate_wind_data_in_parallel.sh finished
+-----------------
+-----------------
+Running 1 jobs after submitting 
+Running 2 jobs after submitting 
+Running 3 jobs after submitting 
+Running 4 jobs after submitting 
+Running 5 jobs after submitting 
+Running 6 jobs after submitting 
+download_seas5_forecasts_in_parallel.sh finished
+-----------------
+-----------------
+icenet/biascorrect_seas5_forcasts.py finished
+@--------------------------------------------------@
