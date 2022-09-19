@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python -V >> log.txt
+# python -V >> log.txt
 echo ----------------- >> log.txt
 echo getting started >> log.txt
 python icenet/gen_masks.py >> log.txt
@@ -18,10 +18,10 @@ echo download_era5_data_in_parallel.sh finished >> log.txt
 echo ----------------- >> log.txt
 
 ######### Probably not needed (did not contribute with a lot in performance and is a lot of data.) #############
-# echo ----------------- >> log.txt
-# ./download_cmip6_data_in_parallel.sh
-# echo download_cmip6_data_in_parallel.sh finished >> log.txt
-# echo ----------------- >> log.txt
+echo ----------------- >> log.txt
+./download_cmip6_data_in_parallel.sh
+echo download_cmip6_data_in_parallel.sh finished >> log.txt
+echo ----------------- >> log.txt
 
 ################################################################################################################
 echo ----------------- >> log.txt
