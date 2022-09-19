@@ -145,7 +145,7 @@ transfer_network_fname = "network_transfer_{}.h5".format(seed)  # trained w/ cmi
 network_fname = "network" + "_{}".format(seed) + ".h5"  # trained w/ obs
 temp_network_fname = "network_tempscaled_{}.h5".format(seed)  # temperature scaled
 
-icenet_architecture = models.unet_batchnorm# _w_dropout # models.unet_batchnorm
+icenet_architecture = models.unet_batchnorm_w_dropout # models.unet_batchnorm
 
 # 1) Use transfer learning before fine-tuning on obs
 do_transfer_learning = False
@@ -172,7 +172,7 @@ verbose = 2
 # Whether to load train/val sets in memory (numpy or tfrecords) when training on
 #   observational data. If both are False, the data loader is used.
 train_on_numpy = False
-train_on_tfrecords = True # False
+train_on_tfrecords = False
 
 # Whether to run the custom callbacks at the 0th batch
 sample_callbacks_at_zero = False
