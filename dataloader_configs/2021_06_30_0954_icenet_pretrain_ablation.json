@@ -158,5 +158,6 @@
   ],
   "default_seed": 42,
   "loss_weight_months": true,
-  "verbose_level": 0
+  "verbose_level": 0,
+  "drop_out_rate": 0
 }
