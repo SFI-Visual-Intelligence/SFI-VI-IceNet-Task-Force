@@ -1,11 +1,12 @@
 import os
 import sys
-sys.path.insert(0, os.path.join(os.getcwd(), 'icenet'))  # if using jupyter kernel
+
+sys.path.insert(0, os.path.join(os.getcwd(), "icenet"))  # if using jupyter kernel
 from tensorflow.keras import backend as K
 import tensorflow as tf
 
 
-def construct_categorical_focal_loss(gamma=2.):
+def construct_categorical_focal_loss(gamma=2.0):
     """
     Softmax version of focal loss.
       FL = - (1 - p_c)^gamma * log(p_c)
@@ -35,7 +36,7 @@ def construct_categorical_focal_loss(gamma=2.):
 
         # Clip the prediction value to prevent NaN's and Inf's
         epsilon = K.epsilon()
-        y_pred = K.clip(y_pred, epsilon, 1. - epsilon)
+        y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
 
         # Calculate Cross Entropy
         cross_entropy = -y_true * K.log(y_pred)
@@ -66,14 +67,16 @@ def weighted_categorical_crossentropy(y_true, y_pred, sample_weight=None):
 
     # Clip the prediction value to prevent NaN's and Inf's
     epsilon = K.epsilon()
-    y_pred = K.clip(y_pred, epsilon, 1. - epsilon)
+    y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
 
-    cross_entropy = - y_true * K.log(y_pred)
+    cross_entropy = -y_true * K.log(y_pred)
 
     return cross_entropy
 
 
-def weighted_categorical_crossentropy_single_leadtime(y_true, y_pred, sample_weight=None):
+def weighted_categorical_crossentropy_single_leadtime(
+    y_true, y_pred, sample_weight=None
+):
     """
     Categorical crossentropy for a single lead time with IceNet's sample weighting.
 
@@ -90,10 +93,10 @@ def weighted_categorical_crossentropy_single_leadtime(y_true, y_pred, sample_wei
 
     # Clip the prediction value to prevent NaN's and Inf's
     epsilon = K.epsilon()
-    y_pred = K.clip(y_pred, epsilon, 1. - epsilon)
+    y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
 
     # cce = tf.keras.losses.CategoricalCrossentropy()
 
-    cross_entropy = - y_true * K.log(y_pred) * sample_weight
+    cross_entropy = -y_true * K.log(y_pred) * sample_weight
 
     return cross_entropy
