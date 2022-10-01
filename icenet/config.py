@@ -69,13 +69,13 @@ missing_dates = [pd.Timestamp('1986-4-1'), pd.Timestamp('1986-5-1'),
 ###############################################################################
 
 # Get API key from https://wandb.ai/authorize
-WANDB_API_KEY = 'YOUR-KEY-HERE'
+WANDB_API_KEY = '9e0c61e66b874aa0b40cf64f58a3a25c8a3d60d4'
 # Absolute path to store wandb generated files (folder must exist)
 #   Note: user must have write access
-WANDB_DIR = '/path/to/wandb/dir'
+WANDB_DIR = '/Users/ima029/Library/CloudStorage/OneDrive-UiTOffice365/Prosjekter/IceNet/wandb'
 # Absolute path to wandb config dir (
-WANDB_CONFIG_DIR = '/path/to/wandb/config/dir'
-WANDB_CACHE_DIR = '/path/to/wandb/cache/dir'
+WANDB_CONFIG_DIR = '/Users/ima029/Library/CloudStorage/OneDrive-UiTOffice365/Prosjekter/IceNet/wandb/config'
+WANDB_CACHE_DIR = '/Users/ima029/Library/CloudStorage/OneDrive-UiTOffice365/Prosjekter/IceNet/wandb/cache'
 
 ###############################################################################
 ### ECMWF details
