@@ -4,12 +4,20 @@
 # You can also specify a repository and a tag, i.e. <docker build -t my_repo/my_image:tag -f path_to_dockerfile>.
 
 # The dockerfile must start with a from statement that specifies a parent image.
-FROM python:3.7.6   
+FROM --platform=amd64 conda/miniconda3:latest   
 
 # Set working directory inside image
 WORKDIR /src
 
 # Copy requirements.txt into /src directory
-COPY requirements.txt /src
+COPY environment.locked.yml /src
 
-RUN pip install -q -r requirements.txt
+RUN conda install -n base mamba -c conda-forge
+
+RUN mamba env create --file environment.locked.yml
+
+RUN echo "source activate icenet" > ~/.bashrc
+
+ARG HDF5_USE_FILE_LOCKING=FALSE
+
+SHELL [ "/bin/bash", "-c"]
