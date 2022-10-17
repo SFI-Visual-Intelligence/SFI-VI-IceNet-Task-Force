@@ -157,7 +157,7 @@ verbose = 2
 # Whether to load train/val sets in memory (numpy or tfrecords) when training on
 #   observational data. If both are False, the data loader is used.
 train_on_numpy = False
-train_on_tfrecords = True
+train_on_tfrecords = False
 
 # Whether to run the custom callbacks at the 0th batch
 sample_callbacks_at_zero = False
