@@ -11,7 +11,7 @@ spec:
         image: "ivermartinsen/icenet:1" # the Docker image to use
         workingDir: /storage/IceNet/repository
         command: ["/bin/bash", "-c"] # specify what should be executed when the job starts, i.e. which command to run in shell
-        args: ["source activate icenet && python icenet/train_icenet.py"]
+        args: ["source activate icenet && python icenet/train_icenet.py --seed 1234 --wandb True"]
         volumeMounts:
         - name: storage
           mountPath: /storage

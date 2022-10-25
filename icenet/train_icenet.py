@@ -100,7 +100,7 @@ else:
 
 wandb.init(
     project='icenet',
-    entity='tomandersson',
+    entity='ivermartinsen',
     config=defaults,
     allow_val_change=True,
     mode=wandb_mode,
