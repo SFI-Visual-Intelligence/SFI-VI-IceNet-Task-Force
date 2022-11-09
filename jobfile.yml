@@ -2,7 +2,7 @@
 kind: job
 apiVersion: batch/v1
 metadata:
-  name: icenettrial # the name for the job
+  name: icenet-download # the name for the job
 spec:
   template:
     spec:
@@ -11,7 +11,11 @@ spec:
         image: "ivermartinsen/icenet:1" # the Docker image to use
         workingDir: /storage/IceNet/repository
         command: ["/bin/bash", "-c"] # specify what should be executed when the job starts, i.e. which command to run in shell
-        args: ["source activate icenet && python icenet/train_icenet.py --seed 1234 --wandb True"]
+        #args: ["source activate icenet && python icenet/train_icenet.py --seed 1234 --wandb True"]
+        #args: ["source activate icenet && python3 icenet/predict_heldout_data.py"]
+        #args: ["source activate icenet && python3 icenet/compute_ensemble_mean_temp_scaling.py"]
+        #args: ["source activate icenet && python3 icenet/analyse_heldout_predictions.py"]
+        args: ["./downloaders/download_seas5_forecasts_in_parallel.sh"]
         volumeMounts:
         - name: storage
           mountPath: /storage
