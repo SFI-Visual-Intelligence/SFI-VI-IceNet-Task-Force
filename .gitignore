@@ -2,6 +2,7 @@
 .zshrc
 data/
 jobfile.yml
+config.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
