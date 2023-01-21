@@ -1,6 +1,9 @@
 import os
 import sys
 
+from models import DropoutWDefaultTraining
+from dropout_mc import dropout_monte_carlo
+
 sys.path.insert(0, os.path.join(os.getcwd(), "icenet"))
 import config
 import re
@@ -11,6 +14,7 @@ from tqdm import tqdm
 from models import linear_trend_forecast
 from utils import IceNetDataLoader
 from tensorflow.keras.models import load_model
+from warnings import warn
 
 """
 Produces SIP forecasts from IceNet and SIC forecasts from the linear trend
@@ -35,8 +39,9 @@ script with relative ease.
 models = ["IceNet", "Linear trend"]
 
 # Specifications for the IceNet model to produce forecasts for
-dataloader_ID = "2021_06_15_1854_icenet_nature_communications"
-architecture_ID = "unet_tempscale"
+# dataloader_ID = "2021_06_15_1854_icenet_nature_communications"
+dataloader_ID = "2022_09_19_w_dropout"
+architecture_ID = "unet_tempscale_dropout_mc"
 tempscaling_used = True  # Whether to load networks with temperature scaling
 
 #### Load network and dataloader
@@ -57,29 +62,65 @@ print("\n\nDone.\n")
 if "IceNet" in models:
 
     if tempscaling_used:
-        network_regex = re.compile("^network_tempscaled_([0-9]*).h5$")
+        # network_regex = re.compile("^network_tempscaled_1([0-9]*).h5$")
+        network_regex = re.compile("^network(.*)_tempscaled_([0-9]*)(.*).h5$")
     else:
-        network_regex = re.compile("^network_([0-9]*).h5$")
+        network_regex = re.compile("^network_(.*)([0-9]*)(.*).h5$")
+        # network_regex = re.compile("^network_([0-9]*).h5$")
 
     network_fpaths = [
         os.path.join(network_h5_files_folder, f)
         for f in sorted(os.listdir(network_h5_files_folder))
         if network_regex.match(f)
     ]
+    print("os.listdir(network_h5_files_folder): ", os.listdir(network_h5_files_folder))
+    print(
+        "network_fpaths unfiltered: ",
+        [
+            os.path.join(network_h5_files_folder, f)
+            for f in sorted(os.listdir(network_h5_files_folder))
+        ],
+    )
+    network_fpaths = [
+        os.path.join(network_h5_files_folder, f)
+        for f in sorted(os.listdir(network_h5_files_folder))
+        if network_regex.match(f)
+    ]
+    print("network_fpaths: ", network_fpaths)
 
     ensemble_seeds = [
         network_regex.match(f)[1]
         for f in sorted(os.listdir(network_h5_files_folder))
         if network_regex.match(f)
     ]
+
+    # warn("Only using 10 networks. Remove this for full ensemble.")
+    # if len(network_fpaths)>10:
+    #     network_fpath = network_fpaths[:10]
+    #     ensemble_seeds = ensemble_seeds[:10]
+
     ensemble_seeds_and_mean = ensemble_seeds.copy()
     ensemble_seeds_and_mean.append("ensemble")
 
     networks = []
-    for network_fpath in network_fpaths:
-        print("Loading model from {}... ".format(network_fpath), end="", flush=True)
-        networks.append(load_model(network_fpath, compile=False))
-        print("Done.")
+
+    if config.dropout_mc:
+        ## only load one network for dropout MC
+        warn("Only loading one network for dropout MC.")
+        # network_fpaths_w_dropout = "network_43.h5"
+        networks = [
+            load_model(
+                network_fpaths[0],
+                compile=False,
+                custom_objects={"DropoutWDefaultTraining": DropoutWDefaultTraining},
+            )
+        ]
+
+    else:
+        for network_fpath in network_fpaths:
+            print("Loading model from {}... ".format(network_fpath), end="", flush=True)
+            networks.append(load_model(network_fpath, compile=False))
+            print("Done.")
 
     print("Temperature scaling factors:")
     for network, seed in zip(networks, ensemble_seeds):
@@ -122,7 +163,9 @@ print("Done.")
 
 n_forecast_months = dataloader.config["n_forecast_months"]
 
-heldout_start = pd.Timestamp("2012-01-01")
+## Not enough memory for all leadtimes at once
+# heldout_start = pd.Timestamp("2012-01-01")
+heldout_start = pd.Timestamp("2016-01-01")
 heldout_end = pd.Timestamp("2020-12-01")
 
 all_target_dates = pd.date_range(start=heldout_start, end=heldout_end, freq="MS")
@@ -179,44 +222,84 @@ for model in models:
 
     start_date = all_start_dates[0]
     for start_date in tqdm(all_start_dates):
+        try:
+            print("Start date: {}".format(start_date))
+            # Target forecast dates for the forecast beginning at this `start_date`
+            target_dates = pd.date_range(
+                start=start_date,
+                end=start_date + pd.DateOffset(months=n_forecast_months - 1),
+                freq="MS",
+            )
+            print("target_dates found.")
+            if model == "IceNet":
 
-        # Target forecast dates for the forecast beginning at this `start_date`
-        target_dates = pd.date_range(
-            start=start_date,
-            end=start_date + pd.DateOffset(months=n_forecast_months - 1),
-            freq="MS",
-        )
+                X, y, sample_weights = dataloader.data_generation([start_date])
+                print("X, y, sample_weights found.")
+                mask = sample_weights > 0
 
-        if model == "IceNet":
+                if config.dropout_mc:
+                    # print(f"len(ensemble_seeds_and_mean) = {len(ensemble_seeds_and_mean)}")
+                    pred = dropout_monte_carlo(
+                        networks[0], X, seeds=range(len(ensemble_seeds_and_mean) - 1)
+                    )  ## allow for mean to add to the end
+                    # print(f"pred.shape = {pred.shape}")
+                else:
+                    ## Ensemble predictions
+                    print("Ensemble predictions...")
+                    print(X.shape)
+                    pred = []
+                    for i, network in enumerate(networks):
+                        print(f"network {i} prediction...")
+                        pred_n = network.predict(X)[0]
+                        pred.append(pred_n)
+                    pred = np.array(pred)
+                    # pred = np.array([network.predict(X)[0] for network in networks])
+                print("pred found.")
 
-            X, y, sample_weights = dataloader.data_generation([start_date])
-            mask = sample_weights > 0
-            pred = np.array([network.predict(X)[0] for network in networks])
-            pred *= mask  # mask outside active grid cell region to zero
-            # concat ensemble mean to the set of network predictions
-            ensemble_mean_pred = pred.mean(axis=0, keepdims=True)
-            pred = np.concatenate([pred, ensemble_mean_pred], axis=0)
-
-        if model == "Linear trend":
-
-            # Same forecast for each lead time: interpret start_date as target_date
-            #   for efficiency
-            pred, _ = linear_trend_forecast(start_date, n_linear_years=35)
-
-        for i, (target_date, leadtime) in enumerate(zip(target_dates, leadtimes)):
+                pred *= mask  # mask outside active grid cell region to zero
+                print("pred masked.")
+                # concat ensemble mean to the set of network predictions
+                ensemble_mean_pred = pred.mean(axis=0, keepdims=True)
+                print("ensemble_mean_pred found.")
+                print(f"ensemble_mean_pred.shape = {ensemble_mean_pred.shape}")
+                print(f"pred.shape = {pred.shape}")
+                pred = np.concatenate([pred, ensemble_mean_pred], axis=0)
+                print("pred concatenated.")
 
             if model == "Linear trend":
 
-                # Same forecast at each lead time
-                if start_date in all_target_dates:
-                    model_forecast_dict[model].loc[start_date, :, :, leadtime] = pred
+                # Same forecast for each lead time: interpret start_date as target_date
+                #   for efficiency
+                pred, _ = linear_trend_forecast(start_date, n_linear_years=35)
 
-            if model == "IceNet":
+            print("Starting to build up forecast DataArrays... ")
+            for i, (target_date, leadtime) in enumerate(zip(target_dates, leadtimes)):
+                print(
+                    "i = {}, target_date = {}, leadtime: {}".format(
+                        i, target_date, leadtime
+                    )
+                )
 
-                if target_date in all_target_dates:
-                    model_forecast_dict[model].loc[
-                        :, target_date, :, :, leadtime
-                    ] = pred[..., i]
+                if model == "Linear trend":
+
+                    # Same forecast at each lead time
+                    if start_date in all_target_dates:
+                        model_forecast_dict[model].loc[
+                            start_date, :, :, leadtime
+                        ] = pred
+
+                if model == "IceNet":
+                    if target_date in all_target_dates:
+                        print("target_date={}".format(target_date))
+                        print("leadtime={}".format(leadtime))
+                        print("pred.shape={}".format(pred.shape))
+                        model_forecast_dict[model].loc[
+                            :, target_date, :, :, leadtime
+                        ] = pred[..., i]
+                        print("Icenet forecast added to model_forecast_dict.")
+        except Exception as e:
+            print("Error: {}".format(e))
+            continue
 
     print("Saving forecast NetCDF for {}... ".format(model), end="", flush=True)
 
