@@ -2,6 +2,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.getcwd(), "icenet"))  # if using jupyter kernel
+
+sys.path.insert(0, os.path.join(os.getcwd(), "icenet"))  # if using jupyter kernel
 from utils import IceNetDataPreProcessor
 
 """
@@ -25,6 +27,9 @@ simulations can take on the order of an hour to compute.
 dataloader_config_fpath = (
     "dataloader_configs/2021_06_15_1854_icenet_nature_communications.json"
 )
+dataloader_config_fpath = (
+    "dataloader_configs/2021_06_15_1854_icenet_nature_communications.json"
+)
 
 preproc_obs_data = True
 
@@ -39,6 +44,20 @@ minmax = False
 # If 'anom' is True, compute and process anomaly from the climatology over
 #   the training years. If 'abs' is True, process the absolute data.
 preproc_vars = {
+    "siconca": {"anom": False, "abs": True, "linear_trend": True},
+    "tas": {"anom": True, "abs": False},
+    "ta500": {"anom": True, "abs": False},
+    "tos": {"anom": True, "abs": False},
+    "rsds": {"anom": True, "abs": False},
+    "rsus": {"anom": True, "abs": False},
+    "psl": {"anom": True, "abs": False},
+    "zg500": {"anom": True, "abs": False},
+    "zg250": {"anom": True, "abs": False},
+    "ua10": {"anom": False, "abs": True},
+    "uas": {"anom": False, "abs": True},
+    "vas": {"anom": False, "abs": True},
+    "land": {"metadata": True, "include": True},
+    "circmonth": {"metadata": True, "include": True},
     "siconca": {"anom": False, "abs": True, "linear_trend": True},
     "tas": {"anom": True, "abs": False},
     "ta500": {"anom": True, "abs": False},

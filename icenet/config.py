@@ -2,7 +2,9 @@ import os
 import pandas as pd
 
 """
+"""
 Defines globals used throughout the codebase.
+"""
 """
 
 ###############################################################################
@@ -22,7 +24,9 @@ ordered_obs_data_folder = os.path.join(data_folder, "ordered_obs_npz")
 
 
 dataloader_config_folder = "dataloader_configs"
+dataloader_config_folder = "dataloader_configs"
 
+networks_folder = "trained_networks"
 networks_folder = "trained_networks"
 
 results_folder = "results"
@@ -31,11 +35,22 @@ permute_and_predict_results_folder = os.path.join(
     results_folder, "permute_and_predict_results"
 )
 uncertainty_results_folder = os.path.join(results_folder, "uncertainty_results")
+results_folder = "results"
+forecast_results_folder = os.path.join(results_folder, "forecast_results")
+permute_and_predict_results_folder = os.path.join(
+    results_folder, "permute_and_predict_results"
+)
+uncertainty_results_folder = os.path.join(results_folder, "uncertainty_results")
 
+figure_folder = "figures"
 figure_folder = "figures"
 
 video_folder = "videos"
+video_folder = "videos"
 
+active_grid_cell_file_format = "active_grid_cell_mask_{}.npy"
+land_mask_filename = "land_mask.npy"
+region_mask_filename = "region_mask.npy"
 active_grid_cell_file_format = "active_grid_cell_mask_{}.npy"
 land_mask_filename = "land_mask.npy"
 region_mask_filename = "region_mask.npy"
@@ -60,6 +75,9 @@ use_polarhole3 = False
 polarhole1_fname = "polarhole1_mask.npy"
 polarhole2_fname = "polarhole2_mask.npy"
 polarhole3_fname = "polarhole3_mask.npy"
+polarhole1_fname = "polarhole1_mask.npy"
+polarhole2_fname = "polarhole2_mask.npy"
+polarhole3_fname = "polarhole3_mask.npy"
 
 # Final month that each of the polar holes apply
 # NOTE: 1st of the month chosen arbitrarily throughout as always working wit
@@ -67,7 +85,16 @@ polarhole3_fname = "polarhole3_mask.npy"
 polarhole1_final_date = pd.Timestamp("1987-06-01")  # 1987 June
 polarhole2_final_date = pd.Timestamp("2005-10-01")  # 2005 Oct
 polarhole3_final_date = pd.Timestamp("2015-12-01")  # 2015 Dec
+polarhole1_final_date = pd.Timestamp("1987-06-01")  # 1987 June
+polarhole2_final_date = pd.Timestamp("2005-10-01")  # 2005 Oct
+polarhole3_final_date = pd.Timestamp("2015-12-01")  # 2015 Dec
 
+missing_dates = [
+    pd.Timestamp("1986-4-1"),
+    pd.Timestamp("1986-5-1"),
+    pd.Timestamp("1986-6-1"),
+    pd.Timestamp("1987-12-1"),
+]
 missing_dates = [
     pd.Timestamp("1986-4-1"),
     pd.Timestamp("1986-5-1"),

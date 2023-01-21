@@ -7,10 +7,13 @@ import warnings
 import xarray as xr
 
 sys.path.insert(0, os.path.join(os.getcwd(), "icenet"))
+
+sys.path.insert(0, os.path.join(os.getcwd(), "icenet"))
 import config
 import argparse
 import utils
 
+"""
 """
 Script to download monthly-averaged CMIP6 climate simulation runs from the Earth
 System Grid Federation (ESFG):
@@ -36,6 +39,7 @@ format.
 See download_cmip6_data_in_parallel.sh to download and regrid multiple climate
 simulations in parallel using this script.
 """
+"""
 
 #### COMMAND LINE INPUT
 # --------------------------------------------------------------------
@@ -43,11 +47,14 @@ simulations in parallel using this script.
 parser = argparse.ArgumentParser()
 parser.add_argument("--source_id", default="EC-Earth3", type=str)
 parser.add_argument("--member_id", default="r2i1p1f1", type=str)
+parser.add_argument("--source_id", default="EC-Earth3", type=str)
+parser.add_argument("--member_id", default="r2i1p1f1", type=str)
 commandline_args = parser.parse_args()
 
 source_id = commandline_args.source_id
 member_id = commandline_args.member_id
 
+print("\n\nDownloading data for {}, {}\n".format(source_id, member_id))
 print("\n\nDownloading data for {}, {}\n".format(source_id, member_id))
 
 ####### User download options
@@ -94,7 +101,28 @@ download_dict = {
             "vas": {"include": True, "table_id": "Amon", "plevels": None},
             "ua": {"include": True, "table_id": "Amon", "plevels": [10_00]},
         },
+            "psl": {"include": True, "table_id": "Amon", "plevels": None},
+            "rsus": {"include": True, "table_id": "Amon", "plevels": None},
+            "rsds": {"include": True, "table_id": "Amon", "plevels": None},
+            "zg": {"include": True, "table_id": "Amon", "plevels": [500_00, 250_00]},
+            "uas": {"include": True, "table_id": "Amon", "plevels": None},
+            "vas": {"include": True, "table_id": "Amon", "plevels": None},
+            "ua": {"include": True, "table_id": "Amon", "plevels": [10_00]},
+        },
     },
+    "EC-Earth3": {
+        "experiment_ids": ["historical", "ssp245"],
+        "data_nodes": ["esgf.bsc.es"],
+        "frequency": "mon",
+        "variable_dict": {
+            "siconca": {"include": True, "table_id": "SImon", "plevels": None},
+            "tas": {"include": True, "table_id": "Amon", "plevels": None},
+            "ta": {"include": True, "table_id": "Amon", "plevels": [500_00]},
+            "tos": {
+                "include": True,
+                "table_id": "Omon",
+                "plevels": None,
+                "ocean_variable": True,
     "EC-Earth3": {
         "experiment_ids": ["historical", "ssp245"],
         "data_nodes": ["esgf.bsc.es"],
@@ -119,6 +147,16 @@ download_dict = {
         },
     },
 }
+            "psl": {"include": True, "table_id": "Amon", "plevels": None},
+            "rsus": {"include": True, "table_id": "Amon", "plevels": None},
+            "rsds": {"include": True, "table_id": "Amon", "plevels": None},
+            "zg": {"include": True, "table_id": "Amon", "plevels": [500_00, 250_00]},
+            "uas": {"include": True, "table_id": "Amon", "plevels": None},
+            "vas": {"include": True, "table_id": "Amon", "plevels": None},
+            "ua": {"include": True, "table_id": "Amon", "plevels": [10_00]},
+        },
+    },
+}
 
 download_folder = os.path.join(config.cmip6_data_folder, source_id, member_id)
 if not os.path.exists(download_folder):
@@ -130,8 +168,14 @@ if not os.path.exists(download_folder):
 sic_day_fpath = os.path.join(
     config.obs_data_folder, "ice_conc_nh_ease2-250_cdr-v2p0_197901021200.nc"
 )
+sic_day_fpath = os.path.join(
+    config.obs_data_folder, "ice_conc_nh_ease2-250_cdr-v2p0_197901021200.nc"
+)
 
 if not os.path.exists(sic_day_fpath):
+    print(
+        "Downloading single daily SIC netCDF file for regridding ERA5 data to EASE grid...\n\n"
+    )
     print(
         "Downloading single daily SIC netCDF file for regridding ERA5 data to EASE grid...\n\n"
     )
@@ -143,14 +187,22 @@ if not os.path.exists(sic_day_fpath):
         "wget -m -nH --cut-dirs=6 -P {} "
         "ftp://osisaf.met.no/reprocessed/ice/conc/v2p0/1979/01/ice_conc_nh_ease2-250_cdr-v2p0_197901021200.nc"
     )
+    retrieve_sic_day_cmd = (
+        "wget -m -nH --cut-dirs=6 -P {} "
+        "ftp://osisaf.met.no/reprocessed/ice/conc/v2p0/1979/01/ice_conc_nh_ease2-250_cdr-v2p0_197901021200.nc"
+    )
     os.system(retrieve_sic_day_cmd.format(config.obs_data_folder))
 
+    print("Done.")
     print("Done.")
 
 # Load a single SIC map to obtain the EASE grid for regridding ERA data
 sic_EASE_cube = iris.load_cube(sic_day_fpath, "sea_ice_area_fraction")
+sic_EASE_cube = iris.load_cube(sic_day_fpath, "sea_ice_area_fraction")
 
 # Convert EASE coord units to metres for regridding
+sic_EASE_cube.coord("projection_x_coordinate").convert_units("meters")
+sic_EASE_cube.coord("projection_y_coordinate").convert_units("meters")
 sic_EASE_cube.coord("projection_x_coordinate").convert_units("meters")
 sic_EASE_cube.coord("projection_y_coordinate").convert_units("meters")
 
@@ -170,26 +222,38 @@ query = {
     "source_id": source_id,
     "member_id": member_id,
     "frequency": source_id_dict["frequency"],
+    "source_id": source_id,
+    "member_id": member_id,
+    "frequency": source_id_dict["frequency"],
 }
 
+for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
 for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
 
     # variable_id = 'vas'
     # variable_id_dict = source_id_dict['variable_dict'][variable_id]
 
     if variable_id_dict["include"] is False:
+    if variable_id_dict["include"] is False:
         continue
 
+    query["variable_id"] = variable_id
+    query["table_id"] = variable_id_dict["table_id"]
     query["variable_id"] = variable_id
     query["table_id"] = variable_id_dict["table_id"]
 
     if "ocean_variable" in variable_id_dict.keys() or source_id == "EC-Earth3":
         query["grid_label"] = "gr"
+    if "ocean_variable" in variable_id_dict.keys() or source_id == "EC-Earth3":
+        query["grid_label"] = "gr"
     else:
+        query["grid_label"] = "gn"
         query["grid_label"] = "gn"
 
     print("\n\n{}: ".format(variable_id), end="", flush=True)
+    print("\n\n{}: ".format(variable_id), end="", flush=True)
 
+    video_folder = os.path.join(config.video_folder, "cmip6", source_id, member_id)
     video_folder = os.path.join(config.video_folder, "cmip6", source_id, member_id)
 
     # Paths for each plevel (None if surface variable)
@@ -199,28 +263,38 @@ for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
 
     if variable_id_dict["plevels"] is None:
         variable_id_dict["plevels"] = [None]
+    if variable_id_dict["plevels"] is None:
+        variable_id_dict["plevels"] = [None]
 
     skip = {}  # Whether to skip each plevel variable
     existing_EASE_fpaths = []
 
+    for plevel in variable_id_dict["plevels"]:
     for plevel in variable_id_dict["plevels"]:
 
         fname = variable_id
         if plevel is not None:
             # suffix for the pressure level in hPa
             fname += "{:.0f}".format(plevel / 100)
+            fname += "{:.0f}".format(plevel / 100)
 
         # Intermediate lat-lon file before iris regridding
         fpaths_latlon[plevel] = os.path.join(download_folder, fname + "_latlon.nc")
+        fpaths_latlon[plevel] = os.path.join(download_folder, fname + "_latlon.nc")
 
+        fname += "_EASE"
+        video_fpaths[plevel] = os.path.join(video_folder, fname + ".mp4")
         fname += "_EASE"
         video_fpaths[plevel] = os.path.join(video_folder, fname + ".mp4")
         if compress:
             fname += "_cmpr"
         fpaths_EASE[plevel] = os.path.join(download_folder, fname + ".nc")
+            fname += "_cmpr"
+        fpaths_EASE[plevel] = os.path.join(download_folder, fname + ".nc")
 
         if os.path.exists(fpaths_EASE[plevel]):
             if overwrite:
+                print("removing existing file... ", end="", flush=True)
                 print("removing existing file... ", end="", flush=True)
                 os.remove(fpaths_EASE[plevel])
                 skip[plevel] = False
@@ -238,15 +312,25 @@ for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
             end="",
             flush=True,
         )
+        print(
+            "skipping due to existing files {}".format(existing_EASE_fpaths),
+            end="",
+            flush=True,
+        )
         continue
 
     if do_download:
         print("searching ESGF... ", end="", flush=True)
+        print("searching ESGF... ", end="", flush=True)
         results = []
+        for experiment_id in source_id_dict["experiment_ids"]:
+            query["experiment_id"] = experiment_id
         for experiment_id in source_id_dict["experiment_ids"]:
             query["experiment_id"] = experiment_id
 
             experiment_id_results = []
+            for data_node in source_id_dict["data_nodes"]:
+                query["data_node"] = data_node
             for data_node in source_id_dict["data_nodes"]:
                 query["data_node"] = data_node
 
@@ -255,14 +339,18 @@ for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
                 # Keep looping over possible data nodes until the experiment data is found
                 if len(experiment_id_results) > 0:
                     print("found {}, ".format(experiment_id), end="", flush=True)
+                    print("found {}, ".format(experiment_id), end="", flush=True)
                     results.extend(experiment_id_results)
                     break  # Break out of the loop over data nodes
 
         results = list(set(results))
         print("found {} files. ".format(len(results)), end="", flush=True)
+        print("found {} files. ".format(len(results)), end="", flush=True)
 
         for plevel in variable_id_dict["plevels"]:
+        for plevel in variable_id_dict["plevels"]:
             if plevel is not None:
+                print("{} hPa, ".format(plevel / 100), end="", flush=True)
                 print("{} hPa, ".format(plevel / 100), end="", flush=True)
 
             if skip[plevel]:
@@ -273,11 +361,22 @@ for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
                     end="",
                     flush=True,
                 )
+                print(
+                    "skipping this plevel due to existing file {}".format(
+                        fpaths_EASE[plevel]
+                    ),
+                    end="",
+                    flush=True,
+                )
                 continue
 
             print("loading metadata... ", end="", flush=True)
+            print("loading metadata... ", end="", flush=True)
 
             # Avoid 500MB DAP request limit
+            cmip6_da = xr.open_mfdataset(
+                results, combine="by_coords", chunks={"time": "499MB"}
+            )[variable_id]
             cmip6_da = xr.open_mfdataset(
                 results, combine="by_coords", chunks={"time": "499MB"}
             )[variable_id]
@@ -286,15 +385,25 @@ for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
                 cmip6_da = cmip6_da.sel(plev=plevel)
 
             print("downloading with xarray... ", end="", flush=True)
+            print("downloading with xarray... ", end="", flush=True)
             cmip6_da.compute()
 
+            print("saving to regrid in iris... ", end="", flush=True)
             print("saving to regrid in iris... ", end="", flush=True)
             cmip6_da.to_netcdf(fpaths_latlon[plevel])
 
     if do_regrid:
         for plevel in variable_id_dict["plevels"]:
+        for plevel in variable_id_dict["plevels"]:
 
             if skip[plevel]:
+                print(
+                    "skipping this plevel due to existing file {}".format(
+                        fpaths_EASE[plevel]
+                    ),
+                    end="",
+                    flush=True,
+                )
                 print(
                     "skipping this plevel due to existing file {}".format(
                         fpaths_EASE[plevel]
@@ -308,6 +417,14 @@ for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
             cmip6_ease = utils.regrid_cmip6(cmip6_cube, sic_EASE_cube, verbose=True)
 
             # Preprocessing
+            if variable_id == "siconca":
+                cmip6_ease.data[cmip6_ease.data > 500] = 0.0
+                cmip6_ease.data[:, land_mask] = 0.0
+                if source_id == "MRI-ESM2-0":
+                    cmip6_ease.data = cmip6_ease.data / 100.0
+            elif variable_id == "tos":
+                cmip6_ease.data[cmip6_ease.data > 500] = 0.0
+                cmip6_ease.data[:, land_mask] = 0.0
             if variable_id == "siconca":
                 cmip6_ease.data[cmip6_ease.data > 500] = 0.0
                 cmip6_ease.data[:, land_mask] = 0.0
@@ -332,6 +449,11 @@ for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
             member_id,
         ) == ("EC-Earth3", "r2i1p1f1"):
             print("\nGenerating video... ")
+        if (source_id, member_id) == ("MRI-ESM2-0", "r2i1p1f1") or (
+            source_id,
+            member_id,
+        ) == ("EC-Earth3", "r2i1p1f1"):
+            print("\nGenerating video... ")
             utils.xarray_to_video(
                 da=next(iter(xr.open_dataset(fpaths_EASE[plevel]).data_vars.values())),
                 video_path=video_fpaths[plevel],
@@ -341,6 +463,7 @@ for variable_id, variable_id_dict in source_id_dict["variable_dict"].items():
                 dpi=150,
             )
 
+    print("Done.\n\n")
     print("Done.\n\n")
 
 dur = time.time() - tic
