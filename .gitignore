@@ -143,7 +143,7 @@ torchgen/packaged/*
 *~
 
 # macOS dir files
-.DS_Store
+*.DS_Store
 
 # Ninja files
 .ninja_deps
