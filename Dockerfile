@@ -17,7 +17,5 @@ RUN echo "source activate icenet" > ~/.bashrc
 ## Env variable added to open cmip6 data.
 ARG HDF5_USE_FILE_LOCKING=FALSE
 
-# RUN mamba info
-
 ## Open bash shell
 SHELL ["/bin/bash", "-c"]
