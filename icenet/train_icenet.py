@@ -81,9 +81,14 @@ parser.add_argument(
 parser.add_argument("--learning_rate", default=0.0005, type=float)
 parser.add_argument("--batch_size", default=2, type=int)
 parser.add_argument("--n_filters_factor", default=2, type=float)
+parser.add_argument(
+    "--dropout_mc",
+    help="Use dropout for MC dropout",
+    default=False,
+    action="store_true",
+)
 
 args = parser.parse_args()
-
 seed = args.seed
 
 #### Wandb SLURM config (https://docs.wandb.ai/guides/track/advanced/environment-variables)
@@ -133,6 +138,9 @@ print("\n\n")
 dataloader_ID = "2022_09_19_w_dropout.json"
 architecture_ID = "unet_tempscale"
 
+if args.dropout_mc:
+    architecture_ID += "_dropout_mc"
+
 eager_mode = False  # Run TensorFlow in 'graph' or 'eager' mode
 
 # Whether to pre-load and existing saved network file (e.g. for fine-tuning after
@@ -142,10 +150,15 @@ pre_load_network_fname = "network_transfer_{}.h5".format(seed)  # From transfer 
 
 # Network fnames
 transfer_network_fname = "network_transfer_{}.h5".format(seed)  # trained w/ cmip6
-network_fname = "network" + "_{}".format(seed) + ".h5"  # trained w/ obs
-temp_network_fname = "network_tempscaled_{}.h5".format(seed)  # temperature scaled
+if args.dropout_mc:
+    # network_fname = "network_dropout_mc" + "_{}".format(seed) + ".h5"
+    # temp_network_fname = "network_dropout_mc_tempscaled_{}.h5".format(seed)  # temperature scaled
+    icenet_architecture = models.unet_batchnorm_w_dropout
+else:
+    network_fname = "network" + "_{}".format(seed) + ".h5"  # trained w/ obs
+    temp_network_fname = "network_tempscaled_{}.h5".format(seed)  # temperature scaled
+    icenet_architecture = models.unet_batchnorm
 
-icenet_architecture = models.unet_batchnorm_w_dropout # models.unet_batchnorm
 
 # 1) Use transfer learning before fine-tuning on obs
 do_transfer_learning = False
@@ -211,6 +224,7 @@ custom_objects = {
     "categorical_focal_loss": loss,
     "ConstructLeadtimeAccuracy": ConstructLeadtimeAccuracy,
     "TemperatureScale": models.TemperatureScale,
+    "DropoutWDefaultTraining": models.DropoutWDefaultTraining,
 }
 
 metric = ConstructLeadtimeAccuracy(name="acc_mean", use_all_forecast_months=True)
@@ -263,7 +277,15 @@ print(
     "\nSetting up the training and validation data"
     "loaders with config file: {}\n\n".format(dataloader_ID)
 )
-dataloader = IceNetDataLoader(dataloader_config_fpath)  ## Definitely enough data for more than one batch.
+dataloader = IceNetDataLoader(
+    dataloader_config_fpath
+)  ## Definitely enough data for more than one batch.
+
+###########################################################################
+###########################################################################
+# ordered_dataloader = OrderedIceNetDataLoader(dataloader_config_fpath)
+###########################################################################
+###########################################################################
 
 val_dataloader = IceNetDataLoader(dataloader_config_fpath)
 val_dataloader.convert_to_validation_data_loader()
@@ -539,13 +561,7 @@ if train_on_observations:
 
     print("\n\nTraining network on obervations.\n\n")
     if not train_on_numpy:
-        # ------------------------------ 
-        print(type(obs_train_data))
-        # for idx, (x, y, w) in enumerate(obs_train_data):
-        #     out = network(x)
-        #     print(out.shape)
-        #     print(y.shape)
-        # exit()
+
         history = network.fit(
             x=obs_train_data,
             epochs=num_epochs,
@@ -556,7 +572,7 @@ if train_on_observations:
             workers=workers,
             use_multiprocessing=use_multiprocessing,
         )
-        # ------------------------------ 
+        # ------------------------------
     elif train_on_numpy:
         history = network.fit(
             x=obs_train_data[0],
