@@ -1,0 +1,7 @@
+experiment_nr: 5
+batch_nr: 5
+n_dropout_variations: 20
+mask_out_land_inputs: false
+mask_out_land_outputs: true
+mask_out_land_in_loss: true
+use_first_sample_only: true

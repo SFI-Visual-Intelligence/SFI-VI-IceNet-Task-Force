@@ -1,0 +1,9 @@
+name: sum_of_thick_ice_in_hudson_bay
+experiment_nr: 20
+# batch_nr: 0
+predict_year: 1991
+n_dropout_variations: 50
+mask_out_land_outputs: false
+mask_out_land_in_loss: true
+mask_out_land_grads: false
+leadtime: 5

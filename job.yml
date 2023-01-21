@@ -1,7 +1,7 @@
 kind: Job
 apiVersion: batch/v1
 metadata:
-  name: train-icenet
+  name: icenet-getsample
 spec:
   template:
     spec:
@@ -11,10 +11,12 @@ spec:
         image: "halyjo/icenetimage:madeonmac-v01"
         workingDir: /storage/experiments/icenet/
         command: ["/bin/bash", "-c"]
-        args: ["source activate icenet && ./train_models.sh"]
+        # # args: ["source activate icenet && python icenet/compute_ensemble_mean_temp_scaling.py"] # ./train_models.sh"]
+        # args: ["source activate icenet && python icenet/train_icenet.py", "--seed=1"] # python icenet/train_icenet.py", "--seed=1"] # ./train_models.sh
+        args: ["source activate icenet && python icenet/get_ordered_data_samples.py"]
         stdin: true
         tty: true
-        env: 
+        env:
         - name: "WANDB_API_KEY"
           value: c5322a72504a88ce9a6a4e0711250af4efd42604
         volumeMounts:
