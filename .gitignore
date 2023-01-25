@@ -3,6 +3,10 @@
 data/
 jobfile.yml
 config.py
+icenet/experimental/figures/
+icenet/experimental/results/
+icenet/experimental/trained_models/
+icenet/experimental/test_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
