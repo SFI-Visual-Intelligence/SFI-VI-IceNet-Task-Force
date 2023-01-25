@@ -32,7 +32,7 @@ def create_dummy_dataframe():
     )
 
     results_df = pd.DataFrame(
-        index=multi_index, columns=["Accuracy drop (%)"], dtype=np.float32
+        index=multi_index, columns=["Feature importance"], dtype=np.float32
     )
 
     for model_number in tqdm(model_numbers):

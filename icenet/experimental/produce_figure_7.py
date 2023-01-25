@@ -7,6 +7,7 @@ import utils
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -16,7 +17,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 dataloader_ID = "2021_06_15_1854_icenet_nature_communications"
 figure_destionation_folder = "icenet/experimental/figures"
 results_folder = "icenet/experimental/results"
-filename = "dummy_dataframe.csv"
+filename = "feature_importance_hbs_max.csv"
 
 ### Load results dataframe
 ####################################################################
@@ -26,6 +27,10 @@ dataloader_config_fpath = os.path.join(
 )
 dataloader = utils.IceNetDataLoader(dataloader_config_fpath)
 results_df = pd.read_csv(os.path.join(results_folder, filename))
+
+# To only look at June forecasts, uncomment the following lines
+#test = results_df["Forecast date"].str.contains("06-01") + results_df["Variable"].str.contains("06-01")
+#results_df = results_df[test]
 
 ### Produce Figure 7
 ####################################################################
@@ -40,14 +45,18 @@ mean_results_df = results_df.groupby(["Leadtime", "Variable"]).mean()
 mean_results_heatmap = (
     mean_results_df.reset_index()
     .pivot(index="Variable", columns="Leadtime")
-    .reindex(all_ordered_variable_names)["Accuracy drop (%)"]
+    .reindex(all_ordered_variable_names)["Feature importance"]
 )
+
+# Scale heatmap values
+mean_results_heatmap -= np.min(mean_results_heatmap.values, axis=0)
+mean_results_heatmap /= np.max(mean_results_heatmap.values, axis=0)
 
 # Reset index to make variable names appear in the heatmap
 mean_results_df = mean_results_df.reset_index()
 
 cbar_kws = {}
-cbar_kws["label"] = "Accuracy change (%)"
+cbar_kws["label"] = "Feature importance"
 
 verbose_varnames = []
 short_varnames = mean_results_heatmap.index.values.astype("str")
@@ -89,6 +98,6 @@ with plt.rc_context(
 
 os.makedirs(figure_destionation_folder, exist_ok=True)
 
-plt.savefig(os.path.join(figure_destionation_folder, "supp_fig7.png"))
-plt.savefig(os.path.join(figure_destionation_folder, "supp_fig7.pdf"))
+plt.savefig(os.path.join(figure_destionation_folder, "supp_fig7_" + filename + ".png"))
+plt.savefig(os.path.join(figure_destionation_folder, "supp_fig7_" + filename + ".pdf"))
 plt.close()
