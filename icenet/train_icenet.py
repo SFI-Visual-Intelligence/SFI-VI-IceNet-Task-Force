@@ -86,7 +86,7 @@ seed = args.seed
 #### Wandb SLURM config (https://docs.wandb.ai/guides/track/advanced/environment-variables)
 ####################################################################
 
-os.environ["WANDB_API_KEY"] = config.WANDB_API_KEY
+# os.environ["WANDB_API_KEY"] = config.WANDB_API_KEY
 os.environ["WANDB_DIR"] = config.WANDB_DIR
 os.environ["WANDB_CONFIG_DIR"] = config.WANDB_CONFIG_DIR
 os.environ["WANDB_CACHE_DIR"] = config.WANDB_CACHE_DIR
@@ -111,7 +111,7 @@ else:
 
 wandb.init(
     project="icenet",
-    entity="tomandersson",
+    entity="llu025",
     config=defaults,
     allow_val_change=True,
     mode=wandb_mode,
@@ -126,7 +126,7 @@ print("\n\n")
 #### User input
 ####################################################################
 
-dataloader_ID = "2021_06_15_1854_icenet_nature_communications"
+dataloader_ID = "2023_02_06_1513_icenet_nature_communications"
 architecture_ID = "unet_tempscale"
 
 eager_mode = False  # Run TensorFlow in 'graph' or 'eager' mode

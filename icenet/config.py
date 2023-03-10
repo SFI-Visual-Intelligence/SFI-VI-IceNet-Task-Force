@@ -74,18 +74,15 @@ missing_dates = [
 ### Weights and biases config (https://docs.wandb.ai/guides/track/advanced/environment-variables)
 ###############################################################################
 
-# Get API key from https://wandb.ai/authorize
-WANDB_API_KEY = "YOUR-KEY-HERE"
 # Absolute path to store wandb generated files (folder must exist)
 #   Note: user must have write access
-WANDB_DIR = "/path/to/wandb/dir"
+WANDB_DIR = "wandb"
 # Absolute path to wandb config dir (
-WANDB_CONFIG_DIR = "/path/to/wandb/config/dir"
-WANDB_CACHE_DIR = "/path/to/wandb/cache/dir"
+WANDB_CONFIG_DIR = "~/.config/wandb"
+WANDB_CACHE_DIR = "~/.cache/wandb"
 
 ###############################################################################
 ### ECMWF details
 ###############################################################################
-
-ECMWF_API_KEY = "YOUR-KEY-HERE"
-ECMWF_API_EMAIL = "YOUR-KEY-HERE"
+ECMWF_API_KEY = "a15a29152219628df3d6cd41c809b201"
+ECMWF_API_EMAIL = "harald.l.joakimsen@uit.no"

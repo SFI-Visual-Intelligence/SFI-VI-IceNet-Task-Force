@@ -7,7 +7,6 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-os.environ["WANDB_API_KEY"] = config.WANDB_API_KEY
 os.environ["WANDB_DIR"] = config.WANDB_DIR
 os.environ["WANDB_CONFIG_DIR"] = config.WANDB_CONFIG_DIR
 os.environ["WANDB_CACHE_DIR"] = config.WANDB_CACHE_DIR
