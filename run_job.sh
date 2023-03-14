@@ -1,0 +1,1 @@
+frink run --follow job.yaml
