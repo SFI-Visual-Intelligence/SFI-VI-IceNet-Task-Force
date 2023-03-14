@@ -145,3 +145,11 @@ class CannyEdgeDetector:
             self.imgs_final.append(img_final)
 
         return self.imgs_final
+
+
+def get_sobel_edge_mask(x: np.ndarray):
+    """Get edge mask from image. Assumes 2 dim image."""
+    sx = ndimage.sobel(x, axis=0, mode="constant")
+    sy = ndimage.sobel(x, axis=1, mode="constant")
+    sob = np.hypot(sx, sy)
+    return sob

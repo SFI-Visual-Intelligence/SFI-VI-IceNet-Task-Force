@@ -21,7 +21,64 @@ from model_dependencies import (
 )
 
 
-LAND_MASK = np.load("land_mask.npy")
+# LAND_MASK = np.load("land_mask.npy")
+LAND_MASK_PATH = "storage/icenet/icenet/analyze_input_influences/land_mask.npy"
+
+
+def construct_sum_last_two_channels_loss(mask_out_land=False):
+    # y_pred = y_pred[:, ~LAND_MASK, ...]
+    def sum_last_two_channels_loss(y_true, y_pred, sample_weight=None):
+        if mask_out_land:
+            y_pred = y_pred[:, ~LAND_MASK_PATH, ...]
+        return tf.sum(y_pred[..., 1:2, :])
+
+    return sum_last_two_channels_loss
+
+
+def construct_categorical_focal_loss(gamma=2.0):
+    """
+    Softmax version of focal loss.
+      FL = - (1 - p_c)^gamma * log(p_c)
+      where p_c = probability of correct class
+
+    Parameters:
+      gamma: Focusing parameter in modulating factor (1-p)^gamma
+        (Default: 2.0, as mentioned in the paper)
+
+    Returns:
+    loss: Focal loss function for training.
+
+    References:
+        Official paper: https://arxiv.org/pdf/1708.02002.pdf
+    """
+
+    def categorical_focal_loss(y_true, y_pred, sample_weight=None):
+        """
+        Parameters:
+            y_true: Tensor of one-hot encoded true class values.
+            y_pred: Softmax output of model corresponding to predicted
+                class probabilities.
+
+        Returns:
+            focal_loss: Output tensor of pixelwise focal loss values.
+        """
+
+        # Clip the prediction value to prevent NaN's and Inf's
+        epsilon = K.epsilon()
+        y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
+
+        # Calculate Cross Entropy
+        cross_entropy = -y_true * K.log(y_pred)
+
+        # Calculate Focal Loss (downweights easy samples where the probability of
+        #   correct class is high)
+        focal_loss = K.pow(1 - y_pred, gamma) * cross_entropy
+
+        # Loss is a tensor which is reduced implictly by TensorFlow using
+        #   sample weights passed during training/evaluation
+        return focal_loss
+
+    return categorical_focal_loss
 
 
 def unet_batchnorm_w_dropout_mod(
@@ -37,6 +94,10 @@ def unet_batchnorm_w_dropout_mod(
     drop_out_rate=0.2,
     **kwargs
 ):
+    """
+
+    Construct a U-Net model with batch normalization and dropout. Note that this is the main model used in this project.
+    """
     inputs = Input(shape=input_shape)
 
     conv1 = Conv2D(
@@ -254,65 +315,3 @@ def unet_batchnorm_w_dropout_mod(
     # )
 
     return model
-
-
-def sum_last_channel_loss(y_true, y_pred, sample_weight=None):
-    # Clip the prediction value to prevent NaN's and Inf's
-    # y_pred = y_pred[:, ~LAND_MASK, ...]
-    return tf.sum(y_pred[..., 2, :])
-
-
-def construct_sum_last_two_channels_loss(mask_out_land=False):
-    # y_pred = y_pred[:, ~LAND_MASK, ...]
-    def sum_last_two_channels_loss(y_true, y_pred, sample_weight=None):
-        if mask_out_land:
-            y_pred = y_pred[:, ~LAND_MASK, ...]
-        return tf.sum(y_pred[..., 1:2, :])
-
-    return sum_last_two_channels_loss
-
-
-def construct_categorical_focal_loss(gamma=2.0):
-    """
-    Softmax version of focal loss.
-      FL = - (1 - p_c)^gamma * log(p_c)
-      where p_c = probability of correct class
-
-    Parameters:
-      gamma: Focusing parameter in modulating factor (1-p)^gamma
-        (Default: 2.0, as mentioned in the paper)
-
-    Returns:
-    loss: Focal loss function for training.
-
-    References:
-        Official paper: https://arxiv.org/pdf/1708.02002.pdf
-    """
-
-    def categorical_focal_loss(y_true, y_pred, sample_weight=None):
-        """
-        Parameters:
-            y_true: Tensor of one-hot encoded true class values.
-            y_pred: Softmax output of model corresponding to predicted
-                class probabilities.
-
-        Returns:
-            focal_loss: Output tensor of pixelwise focal loss values.
-        """
-
-        # Clip the prediction value to prevent NaN's and Inf's
-        epsilon = K.epsilon()
-        y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
-
-        # Calculate Cross Entropy
-        cross_entropy = -y_true * K.log(y_pred)
-
-        # Calculate Focal Loss (downweights easy samples where the probability of
-        #   correct class is high)
-        focal_loss = K.pow(1 - y_pred, gamma) * cross_entropy
-
-        # Loss is a tensor which is reduced implictly by TensorFlow using
-        #   sample weights passed during training/evaluation
-        return focal_loss
-
-    return categorical_focal_loss
