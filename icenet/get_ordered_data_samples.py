@@ -1,6 +1,6 @@
 #%%
 """
-Description: This script is used to get the unshuffled or ordered validation data samples of the 
+Description: This script is used to get the ordered (unshuffled) data samples of the 
     data along with their dates. This is done by subclassing the IceNetDataloader class 
     and overriding all the shuffling behavior. The idea is to return the data along with dates
     such that it is easier to intrpret the results of the model.
@@ -95,36 +95,3 @@ if __name__ == "__main__":
         )
         print(f"Saved val data for time: {timestamp[0].isoformat()}.")
 
-# idx_table = np.zeros(len(dataloader.all_forecast_IDs), dtype=[("idx", int), ("date", str)])
-# for i, (_, batch_IDs) in enumerate(dataloader):
-#     for j, batch_ID in enumerate(batch_IDs):
-#         idx_table[batch_ID] = (i, batch_IDs)
-
-# np.savez_compressed(
-#     os.path.join(config.networks_folder, f"idx_table.npz"),
-#     idx_table=idx_table,
-# )
-
-# %% Get data
-# ## save one batch of data for testing
-# for i, ((x, y, w), batch_IDs) in zip(range(25), dataloader):
-#     # x, y, w = dataloader[i]
-#     # print(type(x), type(y), type(w), type(batch_start), type(batch_end))
-#     # print(x.shape, y.shape, w.shape, batch_start.shape, batch_end.shape)
-#     np.savez_compressed(
-#         os.path.join(config.networks_folder, f"test_data_batch_{i}_w_dates.npz"),
-#         x=x,
-#         y=y,
-#         w=w,
-#         batch_IDs=batch_IDs,
-#     )
-#     print(f"Saved test data batch {i} with dates.")
-# # X, y, dates = dataloader.get_data()
-
-#%%
-
-# batch_w_dates_sample = np.load("/Users/hjo109/Library/CloudStorage/OneDrive-UiTOffice365/need_to_clean/Documents/GitHub/icenet-paper/icenet/analyze_input_influences/test_data/test_data_batch_0_w_dates.npz", allow_pickle=True)
-# data_batch = {f:batch_w_dates_sample[f] for f in batch_w_dates_sample.files}
-# # %%
-# data_batch["batch_IDs"]
-# # %%
