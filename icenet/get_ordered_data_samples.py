@@ -23,7 +23,7 @@ dataloader_config_fpath = os.path.join(
     config.dataloader_config_folder, dataloader_ID + ".json"
 )
 
-#%%
+
 class OrderedIceNetDataLoader(IceNetDataLoader):
     def __init__(self, dataloader_config_fpath, seed: int = 42):
         """
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         #     continue
         np.savez_compressed(
             os.path.join(
-                config.ordered_obs_data_folder, f"data_{timestamp[0].isoformat()}.npz"
+                config.ordered_obs_data_folder, f"yearly_samples/data_{timestamp[0].isoformat()}_to_{timestamp[-1].isoformat()}.npz"
             ),
             x=x,
             y=y,

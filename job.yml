@@ -1,7 +1,7 @@
 kind: Job
 apiVersion: batch/v1
 metadata:
-  name: icenet-getsample
+  name: icenet-grads
 spec:
   template:
     spec:
@@ -13,7 +13,7 @@ spec:
         command: ["/bin/bash", "-c"]
         # # args: ["source activate icenet && python icenet/compute_ensemble_mean_temp_scaling.py"] # ./train_models.sh"]
         # args: ["source activate icenet && python icenet/train_icenet.py", "--seed=1"] # python icenet/train_icenet.py", "--seed=1"] # ./train_models.sh
-        args: ["source activate icenet && python icenet/get_ordered_data_samples.py"]
+        args: ["source activate icenet && python icenet/analyze_input_influences/produce_gradient_importance_npzfiles.py"]
         stdin: true
         tty: true
         env:
