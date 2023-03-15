@@ -290,12 +290,13 @@ def integrated_gradient_dropout_ensemble(
     """
     grads_list = []
     outputs_list = []
+    inputs = inputs[0]
     # define baseline
     baseline = np.zeros_like(inputs)
     # iterate over dropout variations
     for _ in tqdm(range(n)):
         outputs, grads = integrated_gradients(
-            model, baseline, inputs, active_grid_cells, output_mask, leadtime
+            model, baseline, inputs, active_grid_cells, output_mask, leadtime, m_steps=3
         )
         outputs_list.append(outputs)
         # grads = tape.gradient(outputs, inputs)[0]

@@ -33,6 +33,17 @@ baseline = np.zeros_like(inputs[0])
 # Load model
 model = load_icenet_model()
 
+test = integrated_gradients(model, baseline, inputs[0], active_grid_cells, output_mask, 1, 10)
+
+test = integrated_gradient_dropout_ensemble(
+    model, 
+    inputs[0],
+    active_grid_cells,
+    1,
+    output_mask,
+    1
+)
+
 
 def test_integrated_gradients():
     m_steps = 10
