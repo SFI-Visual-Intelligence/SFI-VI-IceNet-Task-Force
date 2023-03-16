@@ -168,7 +168,7 @@ verbose = 2
 # Whether to load train/val sets in memory (numpy or tfrecords) when training on
 #   observational data. If both are False, the data loader is used.
 train_on_numpy = False
-train_on_tfrecords = True
+train_on_tfrecords = False
 
 # Whether to run the custom callbacks at the 0th batch
 sample_callbacks_at_zero = False
@@ -185,7 +185,7 @@ steps_per_epoch = None
 loss = construct_categorical_focal_loss(gamma=2.0)
 
 # Whether to use multiprocessing for generating batches from the data loader
-use_multiprocessing = True
+use_multiprocessing = False
 workers = 3  # Number of CPUs to use
 max_queue_size = 3  # Max number of batches held per CPU
 
@@ -412,9 +412,9 @@ if do_transfer_learning:
         steps_per_epoch=steps_per_epoch,
         callbacks=pre_train_callbacks,
         validation_data=val_dataloader,
-        max_queue_size=max_queue_size,
-        workers=workers,
-        use_multiprocessing=use_multiprocessing,
+        # max_queue_size=max_queue_size,
+        # workers=workers,
+        # use_multiprocessing=use_multiprocessing,
     )
 
     dataloader.turn_off_transfer_learning()
@@ -552,9 +552,9 @@ if train_on_observations:
             verbose=verbose,
             callbacks=obs_callbacks,
             validation_data=obs_val_data,
-            max_queue_size=max_queue_size,
-            workers=workers,
-            use_multiprocessing=use_multiprocessing,
+            # max_queue_size=max_queue_size,
+            # workers=workers,
+            # use_multiprocessing=use_multiprocessing,
         )
     print("\n\nTraining on observational data complete.\n\n")
 

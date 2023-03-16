@@ -17,6 +17,7 @@ from tensorflow.keras.layers import (
     Input,
 )
 from tensorflow.keras.optimizers import Adam
+from SGR import SGRLayer, extract_graph
 
 """
 Defines the Python-based sea ice forecasting models, such as the IceNet architecture
@@ -66,6 +67,7 @@ def unet_batchnorm(
     **kwargs
 ):
     inputs = Input(shape=input_shape)
+    _inputs = SGRLayer(input_shape[-1])(inputs)
 
     conv1 = Conv2D(
         np.int(64 * n_filters_factor),
@@ -73,7 +75,7 @@ def unet_batchnorm(
         activation="relu",
         padding="same",
         kernel_initializer="he_normal",
-    )(inputs)
+    )(_inputs)
     conv1 = Conv2D(
         np.int(64 * n_filters_factor),
         filter_size,
