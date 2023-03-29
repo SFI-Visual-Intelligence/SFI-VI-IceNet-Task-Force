@@ -273,7 +273,7 @@ def gradient_dropout_ensemble(
             )
             loss = tf.reduce_mean(outputs_loss[0, :, :, 2:, leadtime - 1])
 
-        outputs_list.append(outputs)
+        outputs_list.append(outputs_loss)
         grads = tape.gradient(loss, inputs)[0]
 
         grads = np.array(grads)

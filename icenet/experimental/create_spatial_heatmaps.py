@@ -50,7 +50,7 @@ start_date = "2012-01-01"
 end_date = "2019-12-01"
 n_forecast_months = 6
 dropout_sample_size = 25
-results_df_fpath = "icenet/experimental/results"
+results_fpath = "icenet/experimental/results"
 
 ########
 ####################################################################
@@ -79,6 +79,13 @@ init_dates = pd.date_range(
     freq="MS",
 )
 
+# Uncomment to only use a specific subset of dates
+target_dates = pd.DatetimeIndex(["2012-12-01"])
+init_dates = pd.DatetimeIndex([])
+for target_date in target_dates:
+    init_dates = init_dates.append(pd.date_range(start=target_date - pd.DateOffset(months=6-1), end=target_date, freq="MS"))
+
+
 # Load model
 model = load_icenet_model(False)
 
@@ -93,8 +100,9 @@ for forecast_start_date in init_dates:
 inputs = np.stack(inputs_list, axis=0)
 print("Done.\n\n")
 
-# Create heatmap
+# Create arrays to store results
 heatmap = np.zeros((50, 432, 432, 6))
+forecasts = np.zeros((432, 432, 6, 3))
 
 ########
 ####################################################################
@@ -113,7 +121,7 @@ for dat_i, target_date in tqdm(enumerate(target_dates), total=len(target_dates))
         ### Insert feature importance code here
         ###
         ###
-        _, feature_importance_list = gradient_dropout_ensemble(
+        output_list, feature_importance_list = gradient_dropout_ensemble(
             model=model,
             inputs=inputs,
             active_grid_cells=active_grid_cells,
@@ -128,28 +136,34 @@ for dat_i, target_date in tqdm(enumerate(target_dates), total=len(target_dates))
         ###
         # average over all models
         feature_importance = np.mean(feature_importance_list, axis=0)
+        print(np.mean(output_list, axis=0).shape)
+        forecast = np.mean(output_list, axis=0)[0, :, :, :, leadtime - 1]
         # add to heatmap
-        heatmap[:, :, :, leadtime - 1] += feature_importance
+        heatmap[:, :, :, leadtime - 1] += np.moveaxis(feature_importance, -1, 0)
+        forecasts[:, :, leadtime - 1, :] += forecast
         
     print("\nDone.\n")
 
 # Save results
-os.makedirs(os.path.dirname(results_df_fpath), exist_ok=True)
+os.makedirs(os.path.dirname(results_fpath), exist_ok=True)
 timestr = time.strftime("%d%m%y_%H:%M")
-filename = "spatial_heatmap_" + timestr + ".csv"
 
 try:
-    np.savez(os.path.join(results_df_fpath, "spatial_heatmap_" + timestr + ".npz"), heatmap)
+    np.savez(os.path.join(results_fpath, "spatial_heatmap_" + timestr + ".npz"), heatmap)
+    np.savez(os.path.join(results_fpath, "spatial_forecasts_" + timestr + ".npz"), forecasts)
 except OSError:
     print(
         "Could not save results dataframe to provided path. Saving to current directory instead."
     )
     np.savez(os.path.join(os.getcwd(), "spatial_heatmap_" + timestr + ".npz"), heatmap)
+    np.savez(os.path.join(os.getcwd(), "spatial_forecasts_" + timestr + ".npz"), forecasts)
 
-textfilename = os.path.join(results_df_fpath, "spatial_heatmap_" + timestr + ".txt")
+textfilename = os.path.join(results_fpath, "spatial_heatmap_" + timestr + ".txt")
 
 with open(textfilename, "w") as text_file:
     text_file.write("Mask: %s" % args.mask)
     text_file.write("Dropout sample size: %s" % dropout_sample_size)
+    # write  all target dates one line per date
+    text_file.write("Target dates: %s" % target_dates.strftime("%Y-%m-%d").to_list())
 
 print("Done")
