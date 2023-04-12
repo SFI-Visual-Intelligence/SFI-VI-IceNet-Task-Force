@@ -10,10 +10,11 @@ import utils
 import config
 from icenet.experimental.config import LAND_MASK_PATH
 from icenet.experimental.make_hbs_map import createLandEdgeImage
-
+from icenet.experimental.utils import load_icenet_model
 
 land_mask = np.load(LAND_MASK_PATH)
 land_edge = createLandEdgeImage()
+model = load_icenet_model()
 
 
 ########################################################################################
@@ -55,17 +56,21 @@ all_ordered_variable_names = np.array(all_ordered_variable_names)
 ########################################################################################
 months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
-sic, _, _ = dataloader.data_generation(pd.Timestamp("2014-01-01"))
+init_dates = pd.date_range(start="1980-01-01", end="2021-12-01", freq="YS")
 
-fig, axs = plt.subplots(3, 4, figsize=(15, 10))
-for i, ax in enumerate(axs.flatten()):
-    ax.imshow(sic[0, :, :, 11 - i], cmap="Blues", vmin=0, vmax=1)
-    ax.imshow(land_edge, cmap="gray", alpha=0.5)
-    ax.set_title(months[i])
-    ax.axis("off")
-fig.suptitle("SIC for 2013", fontsize=20)
-#plt.savefig("icenet/experimental/figures/sic_2013.png", dpi=300)
-plt.show()
+for init_date in init_dates:
+    inputs, _, _ = dataloader.data_generation(init_date)
+    sics = inputs[0, :, :, :]
+
+    fig, axs = plt.subplots(3, 4, figsize=(15, 10))
+    for i, ax in enumerate(axs.flatten()):
+        ax.imshow(sics[:, :, 11 - i], cmap="Blues", vmin=0, vmax=1)
+        ax.imshow(land_edge, cmap="gray", alpha=0.5)
+        ax.set_title(months[i])
+        ax.axis("off")
+    fig.suptitle(f"SIC for {init_date.year - 1}", fontsize=20)
+    plt.savefig(f"icenet/experimental/figures/sic_{init_date.year - 1}.png", dpi=300)
+
 
 active_grid_cells = []
 for date in pd.date_range(start="2012-01-01", end="2012-12-01", freq="MS"):
@@ -82,6 +87,73 @@ for i, ax in enumerate(axs.flatten()):
 fig.suptitle("Active grid cells for 2012", fontsize=20)
 #plt.savefig("icenet/experimental/figures/active_grid_cells_2012.png", dpi=300)
 plt.show()
+
+
+
+########################################################################################
+### plot SIC forecasts for a specific month ############################################
+########################################################################################
+
+
+target_date = pd.DatetimeIndex(["2007-09-01"])
+init_dates = pd.date_range(start=target_date - pd.DateOffset(months=6-1), end=target_date, freq="MS")
+
+inputs_list = []
+active_grid_cells_list = []
+for forecast_start_date in init_dates:
+    inputs, _, active_grid_cells = dataloader.data_generation(forecast_start_date)
+    inputs_list.append(inputs[0])
+    active_grid_cells_list.append(active_grid_cells)
+
+ensemble_size = 10
+
+fig, axs = plt.subplots(2, 3, figsize=(15, 10))
+
+for leadtime in np.arange(1, 7):
+    inputs = inputs_list[6 - leadtime]
+    active_grid_cells = active_grid_cells_list[6 - leadtime]
+    forecasts = []
+    for _ in range(ensemble_size):
+        forecasts.append(model(inputs[None, ...]))
+    forecast = np.stack(forecasts, axis=0).mean(axis=0)[0, :, :, 2, leadtime - 1] * active_grid_cells[0, :, :, 0, leadtime - 1]
+    ax = axs.flatten()[leadtime - 1]
+    ax.imshow(forecast, cmap="Blues", vmin=0, vmax=1)
+    ax.imshow(land_edge, cmap="gray", alpha=0.5)
+    ax.set_title(f"Leadtime {leadtime}")
+    ax.axis("off")
+fig.suptitle("2007-09-01", fontsize=20)
+#plt.savefig("icenet/experimental/figures/2007_09_01_predictions.png", dpi=300)
+plt.show()
+
+########################################################################################
+### Create mask of variable regions ####################################################
+########################################################################################
+
+init_date_1 = pd.Timestamp("2007-07-01")
+init_date_2 = pd.Timestamp("2013-07-01")
+inputs_1, _, active_grid_cells_1 = dataloader.data_generation(init_date_1)
+inputs_2, _, active_grid_cells_2 = dataloader.data_generation(init_date_2)
+
+ensemble_size = 10
+leadtime = 3
+
+preds_1 = [model(inputs_1[0][None, ...]) for _ in range(ensemble_size)]
+preds_1 = np.stack(preds_1, axis=0).mean(axis=0)[0, :, :, 2, leadtime] * active_grid_cells_1[0, :, :, 0, leadtime]
+preds_2 = [model(inputs_2[0][None, ...]) for _ in range(ensemble_size)]
+preds_2 = np.stack(preds_2, axis=0).mean(axis=0)[0, :, :, 2, leadtime] * active_grid_cells_2[0, :, :, 0, leadtime]
+
+diff = preds_2 - preds_1
+
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+
+ax1.imshow(preds_1, cmap="Blues")
+ax1.imshow(land_edge, cmap="gray", alpha=0.5)
+ax2.imshow(preds_2, cmap="Blues")
+ax2.imshow(land_edge, cmap="gray", alpha=0.5)
+ax3.imshow(diff > 0.6, cmap="Blues")
+ax3.imshow(land_edge, cmap="gray", alpha=0.5)
+plt.show()
+
 ########################################################################################
 ### plot spatial forecast ##############################################################
 ########################################################################################
