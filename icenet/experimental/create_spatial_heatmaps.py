@@ -33,6 +33,8 @@ region_mask = np.load(REGION_MASK_PATH)
 land_mask = ~np.load(LAND_MASK_PATH)
 hbs_mask = region_mask == 5
 bering_mask = region_mask == 4
+extreme_mask = np.load('icenet/experimental/figures/2013_extreme_mask.npy')
+
 
 if args.mask == "hbs":
     output_mask = hbs_mask
@@ -40,6 +42,8 @@ elif args.mask == "land":
     output_mask = land_mask
 elif args.mask == "bering":
     output_mask = bering_mask
+elif args.mask == "extreme":
+    output_mask = extreme_mask
 else:
     output_mask = None
 
@@ -80,10 +84,24 @@ init_dates = pd.date_range(
 )
 
 # Uncomment to only use a specific subset of dates
-target_dates = pd.DatetimeIndex(["2012-12-01"])
+target_dates = pd.DatetimeIndex(["2014-09-01"])
 init_dates = pd.DatetimeIndex([])
 for target_date in target_dates:
     init_dates = init_dates.append(pd.date_range(start=target_date - pd.DateOffset(months=6-1), end=target_date, freq="MS"))
+
+
+####################################################################
+### TEST BLOCK #####################################################
+####################################################################
+
+#for dat_i, target_date in enumerate(target_dates):
+#    for leadtime in leadtimes:
+#        forecast_start_date = init_dates[dat_i + 6 - leadtime]
+#        assert forecast_start_date  + pd.DateOffset(months=leadtime-1) == target_date
+
+####################################################################
+####################################################################
+####################################################################
 
 
 # Load model
@@ -161,8 +179,8 @@ except OSError:
 textfilename = os.path.join(results_fpath, "spatial_heatmap_" + timestr + ".txt")
 
 with open(textfilename, "w") as text_file:
-    text_file.write("Mask: %s" % args.mask)
-    text_file.write("Dropout sample size: %s" % dropout_sample_size)
+    text_file.write("Mask: %s\n" % args.mask)
+    text_file.write("Dropout sample size: %s\n" % dropout_sample_size)
     # write  all target dates one line per date
     text_file.write("Target dates: %s" % target_dates.strftime("%Y-%m-%d").to_list())
 

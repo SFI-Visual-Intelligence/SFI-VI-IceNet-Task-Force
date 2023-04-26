@@ -385,6 +385,7 @@ def _GuidedReluGrad(op, grad):
 
 if __name__ == "__main__":
     x = None
+    
     y = None
 
     model = unet_batchnorm_w_dropout()

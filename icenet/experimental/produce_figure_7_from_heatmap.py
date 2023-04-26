@@ -1,3 +1,7 @@
+"""
+To be used in conjunction with the numpy arrays produced by icenet/experimental/create_feature_importance_heatmap.py
+"""
+
 import os
 import sys
 

@@ -25,7 +25,13 @@ path_to_file = "./icenet/experimental/results/spatial_heatmap_220323_14:47.npz" 
 path_to_file = "./icenet/experimental/results/spatial_heatmap_220323_16:13.npz" # september 2012 prediction global
 path_to_file = "./icenet/experimental/results/spatial_heatmap_290323_16:20.npz" # december 2012 prediction HBS
 path_to_forecast = "./icenet/experimental/results/spatial_forecasts_290323_16:20.npz" # december 2012 forecast HBS
-img = np.load(path_to_file)["arr_0"]
+path_to_heatmap = "./icenet/experimental/results/spatial_heatmap_190423_09:17.npz" # september 2013 extreme event
+path_to_forecast = "./icenet/experimental/results/spatial_forecasts_190423_09:17.npz" # september 2013 extreme event
+path_to_heatmap = "spatial_heatmap_240423_13:19.npz" # june 1999 hbs no sea ice
+path_to_forecast = "./icenet/experimental/results/spatial_forecasts_240423_13:19.npz" # june 1999 hbs no sea ice
+path_to_heatmap = "./icenet/experimental/results/spatial_heatmap_240423_13:24.npz" # june 2009 hbs sic
+path_to_forecast = "./icenet/experimental/results/spatial_forecasts_240423_13:24.npz" # june 2009 hbs sic
+img = np.load(path_to_heatmap)["arr_0"]
 forecast = np.load(path_to_forecast)["arr_0"]
 ########################################################################################
 ########################################################################################
@@ -173,7 +179,7 @@ plt.show()
 ### plot receptive field etc. ##########################################################
 ########################################################################################
 
-leadtime = 1
+leadtime = 3
 
 heatmap = img.sum(axis=(0))[:, :, leadtime-1]
 
@@ -254,17 +260,26 @@ plt.show()
 ########################################################################################
 ### plot spatial feature importance for all variables for a selected leadtime ##########
 ########################################################################################
-leadtime = 1
+leadtime = 4
 
-fig, axes = plt.subplots(5, 10, figsize=(10, 10))
+variables = np.arange(18, 47)
+variables = [21, 22, 23] + [30, 31, 32]
+
+img_reduced = img[variables, :, :, leadtime-1]
+variable_names_reduced = all_ordered_variable_names[variables]
+
+num_rows = int(np.ceil(np.sqrt(len(variables)/2)))
+num_cols = len(variables)//num_rows
+
+fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 10))
 
 for i, ax in enumerate(axes.flatten()):
-    ax.imshow(np.abs(img[i, :, :, leadtime-1]), cmap="Reds", vmin=0, vmax=np.max(np.abs(img[:, :, :, leadtime-1])))
+    ax.imshow(np.abs(img_reduced[i, :, :]), cmap="Reds", vmin=0, vmax=np.max(np.abs(img_reduced[:, :, :])))
     ax.imshow(land_edge, cmap="gray", alpha=0.3)
     ax.set_xticks([])
     ax.set_yticks([])
     # set title with linebreaks
-    ax.set_title(all_ordered_variable_names[i], fontsize=4)
+    ax.set_title(variable_names_reduced[i], fontsize=4)
 
 fig.suptitle(f"Spatial feature importance for {leadtime} month leadtime for all variables", fontsize=16)
 
@@ -274,3 +289,13 @@ plt.show()
 ########################################################################################
 ########################################################################################
 ########################################################################################
+
+def display_heatmap(leadtime, variable):
+    heatmap = img[variable, :, :, leadtime-1]
+    plt.imshow(np.abs(heatmap), cmap="Reds")
+    plt.imshow(land_edge, cmap="gray", alpha=0.3)
+    plt.title(f"Feature importance for {all_ordered_variable_names[variable]} for leadtime {leadtime}")
+    plt.axis("off")
+    plt.show()
+
+display_heatmap(leadtime=3, variable=0)
