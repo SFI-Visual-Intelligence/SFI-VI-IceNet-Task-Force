@@ -17,33 +17,6 @@ from experimental.guided_backprop import (
 from experimental.utils import load_icenet_model
 from experimental.config import LAND_MASK_PATH
 
-# Instantiate dataloader
-dataloader_ID = "2021_06_15_1854_icenet_nature_communications"
-dataloader_config_fpath = os.path.join(
-    config.dataloader_config_folder, dataloader_ID + ".json"
-)
-dataloader = IceNetDataLoader(dataloader_config_fpath)
-
-# Generate data for testing
-start_date = "2012-01-01"
-inputs, _, active_grid_cells = dataloader.data_generation(start_date)
-output_mask = ~np.load(LAND_MASK_PATH)
-baseline = np.zeros_like(inputs[0])
-
-# Load model
-model = load_icenet_model()
-
-test = integrated_gradients(model, baseline, inputs[0], active_grid_cells, output_mask, 1, 10)
-
-test = integrated_gradient_dropout_ensemble(
-    model, 
-    inputs[0],
-    active_grid_cells,
-    1,
-    output_mask,
-    1
-)
-
 
 def test_integrated_gradients():
     m_steps = 10
@@ -68,3 +41,26 @@ def test_generate_path_inputs():
     alphas = tf.linspace(start=0.0, stop=1.0, num=m_steps + 1)
     interpolated_path_input_batch = generate_path_inputs(baseline, inputs[0], alphas)
     assert interpolated_path_input_batch.shape == (m_steps + 1, *inputs[0].shape)
+
+
+if __name__ == "__main__":
+    # Instantiate dataloader
+    dataloader_ID = "2021_06_15_1854_icenet_nature_communications"
+    dataloader_config_fpath = os.path.join(
+        config.dataloader_config_folder, dataloader_ID + ".json"
+    )
+    dataloader = IceNetDataLoader(dataloader_config_fpath)
+
+    # Generate data for testing
+    start_date = "2012-01-01"
+    inputs, _, active_grid_cells = dataloader.data_generation(start_date)
+    output_mask = ~np.load(LAND_MASK_PATH)
+    baseline = np.zeros_like(inputs[0])
+
+    # Load model
+    model = load_icenet_model()
+
+    # Test functions
+    test_integrated_gradients()
+    test_compute_gradients()
+    test_generate_path_inputs()
