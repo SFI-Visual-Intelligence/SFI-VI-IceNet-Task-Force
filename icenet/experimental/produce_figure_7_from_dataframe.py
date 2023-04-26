@@ -1,3 +1,7 @@
+"""
+To be used in conjunction with the pandas dataframes produced by icenet/experimental/create_feature_importance_dataframe.py
+"""
+
 import os
 import sys
 
@@ -17,7 +21,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 dataloader_ID = "2021_06_15_1854_icenet_nature_communications"
 figure_destionation_folder = "icenet/experimental/figures"
 results_folder = "icenet/experimental/results"
-filename = "feature_importance_hbs_max.csv"
+filename = "landmask_sum_guided_backprop.csv"
 
 ### Load results dataframe
 ####################################################################
@@ -48,9 +52,19 @@ mean_results_heatmap = (
     .reindex(all_ordered_variable_names)["Feature importance"]
 )
 
+# To zero out uninteresting features, uncomment the following lines
+#mean_results_heatmap.iloc[:18, :] = 0
+#mean_results_heatmap.iloc[-3:, :] = 0
+
 # Scale heatmap values
-mean_results_heatmap -= np.min(mean_results_heatmap.values, axis=0)
-mean_results_heatmap /= np.max(mean_results_heatmap.values, axis=0)
+#mean_results_heatmap -= np.min(mean_results_heatmap.values, axis=0)
+#mean_results_heatmap /= np.max(mean_results_heatmap.values[:, :-1])
+#mean_results_heatmap *= 11
+from experimental.config import LAND_MASK_PATH, REGION_MASK_PATH
+n = np.sum(~np.load(LAND_MASK_PATH))
+#n = np.sum(np.load(REGION_MASK_PATH) == 5)
+mean_results_heatmap /= (n*5e-7)
+
 
 # Reset index to make variable names appear in the heatmap
 mean_results_df = mean_results_df.reset_index()
@@ -87,7 +101,8 @@ with plt.rc_context(
         cmap="RdBu_r",
         center=0.0,
         cbar_kws=cbar_kws,
-        vmin=-0.5,
+        vmax=.5,
+        vmin=-.5,
         cbar_ax=cax,
     )
     ax.set_xlabel("Lead time (months)")
