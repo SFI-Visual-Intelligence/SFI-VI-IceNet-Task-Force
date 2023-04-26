@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 
 from models import unet_batchnorm_w_dropout
 
-from experimental.utils import load_icenet_batch, load_icenet_model
+
 
 import experimental.config as config
 from einops import repeat
@@ -33,28 +33,6 @@ from einops import repeat
 REGION_MASK = np.load(config.REGION_MASK_PATH) == 5
 
 from warnings import warn
-
-
-def main():
-    batch_nr = 0
-    n_dropout_variations = 100
-    mask_out_land_inputs = False
-    mask_out_land_outputs = True
-    mask_out_land_in_loss = True
-    x, y = load_icenet_batch(DATA_PATHS[batch_nr])
-
-    model = load_icenet_model(mask_out_land_in_loss)
-    outputs, grads, grads_std = compute_explanations(
-        x[0:1],  ## only look at first sample
-        y[0:1],
-        model,
-        mask_out_land_inputs=mask_out_land_inputs,
-        mask_out_land_outputs=mask_out_land_outputs,
-        n=n_dropout_variations,
-    )
-
-    significant_mask = t_test(grads, grads_std, n=n_dropout_variations, alpha=0.025)
-    return outputs, grads, grads_std, significant_mask
 
 
 def compute_explanations(
@@ -76,37 +54,6 @@ def compute_explanations(
         grads_std = grads_std * ~land_mask[:, :, None]
 
     return outputs, grads, grads_std
-
-
-def get_pred_and_explanations(cfg: DictConfig) -> tuple:
-    land_mask = np.load(config.LAND_MASK_PATH)
-    hudson_bay_mask = np.load(config.REGION_MASK_PATH) == 5
-
-    # x, y, w, time_frame = load_icenet_batch(config.DATA_PATHS[cfg.batch_nr], with_dates=True)
-    x, y, w = load_icenet_batch(config.DATA_PATHS[cfg.batch_nr], with_dates=False)
-    model = load_icenet_model(mask_out_land=cfg.mask_out_land_in_loss)
-
-    warn("Only looking at first sample in batch. ")
-    outputs, grads, grads_std = guided_backprop_dropout_ensemble_stats(
-        x[0:1],
-        y[0:1],
-        w[0:1],
-        model,
-        n=cfg.n_dropout_variations,
-        mask_out_land_in_loss=cfg.mask_out_land_in_loss,
-        additional_mask=hudson_bay_mask,
-        leadtime=cfg.leadtime,
-    )
-
-    if cfg.mask_out_land_outputs:
-        outputs = outputs * ~land_mask[:, :, None, None]
-    if cfg.mask_out_land_grads:
-        grads = grads * ~land_mask[:, :, None]
-        grads_std = grads_std * ~land_mask[:, :, None]
-
-    significant_mask = t_test(grads, grads_std, n=cfg.n_dropout_variations, alpha=0.05)
-    # return outputs, w[0:1, ..., cfg.leadtime], grads, grads_std, significant_mask, time_frame, cfg
-    return outputs, w[0:1, ..., cfg.leadtime], grads, grads_std, significant_mask, cfg
 
 
 def guided_backprop_dropout_ensemble_stats(
@@ -423,17 +370,6 @@ def guidedRelu(x):
         return tf.cast(dy > 0, "float32") * tf.cast(x > 0, "float32") * dy
 
     return tf.nn.relu(x), grad
-
-
-if __name__ == "__main__":
-    test_load_icenet_batch()
-    # main()
-
-    # plt.imshow(np.flip(deprocess_image(np.array(grads)), -1))
-    # plt.show()
-
-    # grads = tape.gradient(outputs, inputs)[0]
-
 
 ##################################################################
 ##################################################################
