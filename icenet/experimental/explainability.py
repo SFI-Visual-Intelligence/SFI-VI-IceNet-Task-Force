@@ -212,9 +212,7 @@ def gradient_dropout_ensemble(
 
             if output_mask is not None:
                 outputs = outputs * output_mask[None, :, :, None, None]
-                print("Masking out everything outside of output_mask.")
-
-            warn("Masking out all inactive pixels in output.")
+                
             outputs_loss = outputs * repeat(
                 active_grid_cells, "n h w 1 l -> n h w c l", c=3
             )
