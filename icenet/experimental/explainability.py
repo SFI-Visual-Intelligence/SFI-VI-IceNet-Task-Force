@@ -9,31 +9,17 @@ import os
 sys.path.insert(0, os.path.join(os.getcwd(), "icenet"))  # if using jupyter kernel
 
 import tensorflow as tf
-
-# from models import unet_batchnorm_w_dropout
-
-import tensorflow.keras.backend as K
-from tensorflow.keras.models import Model
-
-import experimental.config as config
-from omegaconf import DictConfig
-
-
-from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
-
-from models import unet_batchnorm_w_dropout
-
-
-
-import experimental.config as config
+from tensorflow.keras.models import Model
+from tqdm import tqdm
 from einops import repeat
-
-REGION_MASK = np.load(config.REGION_MASK_PATH) == 5
-
 from warnings import warn
+from models import unet_batchnorm_w_dropout
+import experimental.config as config
 
+# Directory of ensemble models
+model_dir = "../trained_networks/unet_tempscale/networks/"
 
 def compute_explanations(
     x, y, model, mask_out_land_inputs=False, mask_out_land_outputs=False, n=20
@@ -178,8 +164,8 @@ def guided_backprop_dropout_ensemble(
     return outputs_list, grads_list
 
 
-def gradient_dropout_ensemble(
-    model, inputs, active_grid_cells, n: int, output_mask=None, leadtime=1
+def gradient_ensemble(
+    model, inputs, active_grid_cells, output_mask=None, leadtime=1
 ):
     """
     Perform guided backpropagation on a model with dropout.
@@ -189,7 +175,6 @@ def gradient_dropout_ensemble(
         inputs (np.array): Input data
         active_grid_cells (np.array): A mask that indicates which pixels to include in the output. This masks out land pixels, the polar hole
             and portions of the ocean that are assumed to never have ice. i.e. assumed irrelevant predictions.
-        n (int): Number of dropout variations to perform.
         output_mask (np.array): A mask that indicates which pixels to include in the output.
         leadtime (int): The leadtime to analyze (1, ..., 6). Defaults to 1.
 
@@ -200,16 +185,17 @@ def gradient_dropout_ensemble(
     grads_list = []
     outputs_list = []
 
-    for _ in tqdm(range(n)):
-        gb_model = Model(
-            inputs=[model.inputs],
-            outputs=[model.output],
-        )
+    #for _ in tqdm(range(n)):
+    for model_path in tqdm(os.listdir(model_dir)):
+        #model = Model(
+        #    inputs=[model.inputs],
+        #    outputs=[model.output],
+        #)
+        model = tf.keras.models.load_model(os.path.join(model_dir, model_path))
         with tf.GradientTape() as tape:
             inputs = tf.cast(inputs, tf.float32)
             tape.watch(inputs)
-            outputs = gb_model(inputs)
-
+            outputs = model(inputs)
             if output_mask is not None:
                 outputs = outputs * output_mask[None, :, :, None, None]
                 

@@ -11,13 +11,12 @@ import config
 import utils
 import time
 import argparse
-from experimental.guided_backprop import guided_backprop_dropout_ensemble, gradient_dropout_ensemble
+from experimental.explainability import gradient_ensemble
 from experimental.utils import load_icenet_model
 from experimental.config import REGION_MASK_PATH, LAND_MASK_PATH
 
 np.set_printoptions(formatter={"float": lambda x: "{0:0.2f}".format(x)})
 pd.options.display.float_format = "{:.2f}".format
-
 
 ########
 ####################################################################
@@ -35,7 +34,6 @@ hbs_mask = region_mask == 5
 bering_mask = region_mask == 4
 extreme_mask = np.load('icenet/experimental/figures/2013_extreme_mask.npy')
 
-
 if args.mask == "hbs":
     output_mask = hbs_mask
 elif args.mask == "land":
@@ -50,10 +48,8 @@ else:
 print("Mask: ", args.mask)
 
 dataloader_ID = "2021_06_15_1854_icenet_nature_communications"
-start_date = "2012-01-01"
-end_date = "2019-12-01"
+target_date = "2013-09-01"
 n_forecast_months = 6
-dropout_sample_size = 25
 results_fpath = "icenet/experimental/results"
 
 ########
@@ -71,20 +67,9 @@ dataloader = utils.IceNetDataLoader(dataloader_config_fpath)
 # List variable names in order of appearance as in Figure 7
 all_ordered_variable_names = dataloader.determine_variable_names()
 leadtimes = np.arange(1, n_forecast_months + 1)
-model_numbers = ["model" for _ in range(dropout_sample_size)]
 
-# All dates for which we want to make a forecast
-target_dates = pd.date_range(start=start_date, end=end_date, freq="MS")
-
-# Forecast initialisation dates s.t. each target date has a forecast at each lead time
-init_dates = pd.date_range(
-    start=pd.Timestamp(start_date) - pd.DateOffset(months=n_forecast_months - 1),
-    end=end_date,
-    freq="MS",
-)
-
-# Uncomment to only use a specific subset of dates
-target_dates = pd.DatetimeIndex(["2014-09-01"])
+# Build init dates
+target_dates = pd.DatetimeIndex([target_date])
 init_dates = pd.DatetimeIndex([])
 for target_date in target_dates:
     init_dates = init_dates.append(pd.date_range(start=target_date - pd.DateOffset(months=6-1), end=target_date, freq="MS"))
@@ -94,10 +79,10 @@ for target_date in target_dates:
 ### TEST BLOCK #####################################################
 ####################################################################
 
-#for dat_i, target_date in enumerate(target_dates):
-#    for leadtime in leadtimes:
-#        forecast_start_date = init_dates[dat_i + 6 - leadtime]
-#        assert forecast_start_date  + pd.DateOffset(months=leadtime-1) == target_date
+for dat_i, target_date in enumerate(target_dates):
+    for leadtime in leadtimes:
+        forecast_start_date = init_dates[dat_i + 6 - leadtime]
+        assert forecast_start_date  + pd.DateOffset(months=leadtime-1) == target_date
 
 ####################################################################
 ####################################################################
@@ -139,11 +124,10 @@ for dat_i, target_date in tqdm(enumerate(target_dates), total=len(target_dates))
         ### Insert feature importance code here
         ###
         ###
-        output_list, feature_importance_list = gradient_dropout_ensemble(
+        output_list, feature_importance_list = gradient_ensemble(
             model=model,
             inputs=inputs,
             active_grid_cells=active_grid_cells,
-            n=dropout_sample_size,
             output_mask=output_mask,
             leadtime=leadtime,
         )
@@ -154,9 +138,8 @@ for dat_i, target_date in tqdm(enumerate(target_dates), total=len(target_dates))
         ###
         # average over all models
         feature_importance = np.mean(feature_importance_list, axis=0)
-        print(np.mean(output_list, axis=0).shape)
         forecast = np.mean(output_list, axis=0)[0, :, :, :, leadtime - 1]
-        # add to heatmap
+        # add to arrays
         heatmap[:, :, :, leadtime - 1] += np.moveaxis(feature_importance, -1, 0)
         forecasts[:, :, leadtime - 1, :] += forecast
         
@@ -180,7 +163,6 @@ textfilename = os.path.join(results_fpath, "spatial_heatmap_" + timestr + ".txt"
 
 with open(textfilename, "w") as text_file:
     text_file.write("Mask: %s\n" % args.mask)
-    text_file.write("Dropout sample size: %s\n" % dropout_sample_size)
     # write  all target dates one line per date
     text_file.write("Target dates: %s" % target_dates.strftime("%Y-%m-%d").to_list())
 
