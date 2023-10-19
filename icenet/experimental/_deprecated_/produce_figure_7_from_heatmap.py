@@ -17,11 +17,12 @@ from tqdm import tqdm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 results_folder = "icenet/experimental/results"
-filename_1 = "spatial_heatmap_190423_09:17.npz" # september 2013 extreme event
-filename = "spatial_heatmap_190423_14:14.npz" # september 2007 no sea ice
-filename = "spatial_heatmap_240423_13:19.npz" # june 1999 hbs no sea ice
-filename = "spatial_heatmap_240423_13:24.npz" # june 2009 hbs sic
-filename = "spatial_heatmap_260423_13:33.npz" # september 2014 extreme mask
+filename = "spatial_heatmap_190423_09:17.npz" # september 2013 extreme event
+#filename = "spatial_heatmap_190423_14:14.npz" # september 2007 no sea ice
+#filename = "spatial_heatmap_240423_13:19.npz" # june 1999 hbs no sea ice
+#filename = "spatial_heatmap_240423_13:24.npz" # june 2009 hbs sic
+#filename = "spatial_heatmap_260423_13:33.npz" # september 2014 extreme mask
+#filename = "spatial_heatmap_100523_14:39.npz" # september 2013 extreme mask
 aggregate_features = lambda x: np.sum(x) # can use another aggregation function here
 figure_destionation_folder = "icenet/experimental/figures"
 
@@ -29,6 +30,11 @@ figure_destionation_folder = "icenet/experimental/figures"
 ####################################################################
 
 heatmap = np.load(os.path.join(results_folder, filename))["arr_0"]
+
+from experimental.config import LAND_MASK_PATH
+land_mask = ~np.load(LAND_MASK_PATH)
+
+heatmap[:18] = heatmap[:18] * land_mask[None, :, :, None]
 
 ### List variable names as they appear in figure 7, supplementary material
 ####################################################################
@@ -110,15 +116,17 @@ mean_results_heatmap = (
 
 
 
-# To zero out uninteresting features, uncomment the following lines
-#mean_results_heatmap.iloc[:18, :] = 0
-#mean_results_heatmap.iloc[-3:, :] = 0
 
 # To scale heatmap values, uncomment the following lines
 #mean_results_heatmap -= np.min(mean_results_heatmap.values[:-3], axis=0)
-#mean_results_heatmap /= np.max(mean_results_heatmap.values[:, :-1])
-mean_results_heatmap /= np.max(mean_results_heatmap.values, axis=0)
+mean_results_heatmap /= mean_results_heatmap.loc["cos(month)", 3]
+#mean_results_heatmap /= (np.max(mean_results_heatmap.values, axis=0))
+#mean_results_heatmap /= np.max(mean_results_heatmap.values)
 #mean_results_heatmap *= 11
+
+# To zero out uninteresting features, uncomment the following lines
+#mean_results_heatmap.iloc[:18, :] = 0
+mean_results_heatmap.iloc[-3:, :6] = 0
 
 # Reset index to make variable names appear in the heatmap
 mean_results_df = mean_results_df.reset_index()

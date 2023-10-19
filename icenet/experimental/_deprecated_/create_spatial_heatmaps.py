@@ -4,15 +4,17 @@ import os
 os.environ["OMP_NUM_THREADS"] = "16"
 
 sys.path.insert(0, os.path.join(os.getcwd(), "icenet"))  # if using jupyter kernel
+import glob
 import pandas as pd
+import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 import config
 import utils
 import time
 import argparse
-from experimental.explainability import gradient_ensemble
-from experimental.utils import load_icenet_model
+from experimental.explainability import get_gradients
+from experimental.utils import load_icenet_monte_carlo_model
 from experimental.config import REGION_MASK_PATH, LAND_MASK_PATH
 
 np.set_printoptions(formatter={"float": lambda x: "{0:0.2f}".format(x)})
@@ -52,6 +54,19 @@ target_date = "2013-09-01"
 n_forecast_months = 6
 results_fpath = "icenet/experimental/results"
 
+####################################################################
+### LOAD MODELS ####################################################
+####################################################################
+
+# Directory of ensemble models
+model_dir = "./trained_networks/2021_06_15_1854_icenet_nature_communications/unet_tempscale/networks/"
+# List of ensemble models
+ensemble_paths = glob.glob(model_dir + "*.h5")
+# Load ensemble models
+ensemble = [tf.keras.models.load_model(model_path, compile=False) for model_path in ensemble_paths]
+# Load IceNet monte carlo dropout model
+ensemble = [load_icenet_model(False)]
+
 ########
 ####################################################################
 ### PREPARE INPUTS #################################################
@@ -89,8 +104,8 @@ for dat_i, target_date in enumerate(target_dates):
 ####################################################################
 
 
-# Load model
-model = load_icenet_model(False)
+## Load model
+#model = load_icenet_model(False)
 
 # Load inputs
 print("Building up all the baseline inputs... ")
@@ -115,34 +130,44 @@ forecasts = np.zeros((432, 432, 6, 3))
 
 
 # Iterate over all models and forecast dates
-for dat_i, target_date in tqdm(enumerate(target_dates), total=len(target_dates)):
-    for leadtime in leadtimes:
-        inputs = inputs_list[dat_i + 6 - leadtime][None, ...]
-        active_grid_cells = active_grid_cells_list[dat_i + 6 - leadtime]
-        ###
-        ###
-        ### Insert feature importance code here
-        ###
-        ###
-        output_list, feature_importance_list = gradient_ensemble(
-            model=model,
-            inputs=inputs,
-            active_grid_cells=active_grid_cells,
-            output_mask=output_mask,
-            leadtime=leadtime,
-        )
-        ###
-        ###
-        ### End of feature importance code
-        ###
-        ###
-        # average over all models
-        feature_importance = np.mean(feature_importance_list, axis=0)
-        forecast = np.mean(output_list, axis=0)[0, :, :, :, leadtime - 1]
-        # add to arrays
-        heatmap[:, :, :, leadtime - 1] += np.moveaxis(feature_importance, -1, 0)
-        forecasts[:, :, leadtime - 1, :] += forecast
-        
+for model in ensemble:
+    print("Running model: ", model)
+    for dat_i, target_date in tqdm(enumerate(target_dates), total=len(target_dates)):
+        for leadtime in leadtimes:
+            inputs = inputs_list[dat_i + 6 - leadtime][None, ...]
+            active_grid_cells = active_grid_cells_list[dat_i + 6 - leadtime]
+            ###
+            ###
+            ### Insert feature importance code here
+            ###
+            ###
+            outputs, gradients = get_gradients(
+                model=model,
+                inputs=inputs,
+                active_grid_cells=active_grid_cells,
+                output_mask=output_mask,
+                leadtime=leadtime,
+            )
+            ###
+            ###
+            ### End of feature importance code
+            ###
+            ###
+            # average over all models
+            #feature_importance = np.mean(feature_importance_list, axis=0)
+            try:
+                feature_importance += gradients / len(ensemble)
+            except NameError:
+                feature_importance = gradients / len(ensemble)
+            #forecast = np.mean(output_list, axis=0)[0, :, :, :, leadtime - 1]
+            try:
+                forecast += outputs[0, :, :, :, leadtime - 1] / len(ensemble)
+            except NameError:
+                forecast = outputs[0, :, :, :, leadtime - 1] / len(ensemble)
+            # add to arrays
+            heatmap[:, :, :, leadtime - 1] += np.moveaxis(feature_importance, -1, 0)
+            forecasts[:, :, leadtime - 1, :] += forecast
+            
     print("\nDone.\n")
 
 # Save results

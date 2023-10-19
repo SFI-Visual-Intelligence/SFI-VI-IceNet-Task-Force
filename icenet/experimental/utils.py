@@ -4,7 +4,7 @@ from models import DropoutWDefaultTraining, TemperatureScale
 from metrics import ConstructLeadtimeAccuracy
 
 
-def load_icenet_model(mask_out_land=False):
+def load_icenet_monte_carlo_model(mask_out_land=False):
     """
     Load the IceNet model trained with MC dropout.
     """

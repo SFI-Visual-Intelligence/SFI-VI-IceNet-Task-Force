@@ -8,6 +8,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.getcwd(), "icenet"))  # if using jupyter kernel
 
+import glob
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,7 +20,9 @@ from models import unet_batchnorm_w_dropout
 import experimental.config as config
 
 # Directory of ensemble models
-model_dir = "../trained_networks/unet_tempscale/networks/"
+model_dir = "./trained_networks/2021_06_15_1854_icenet_nature_communications/unet_tempscale/networks/"
+# List of ensemble models
+ensemble = glob.glob(model_dir + "*.h5")
 
 def compute_explanations(
     x, y, model, mask_out_land_inputs=False, mask_out_land_outputs=False, n=20
@@ -164,7 +167,7 @@ def guided_backprop_dropout_ensemble(
     return outputs_list, grads_list
 
 
-def gradient_ensemble(
+def get_gradients(
     model, inputs, active_grid_cells, output_mask=None, leadtime=1
 ):
     """
@@ -182,35 +185,22 @@ def gradient_ensemble(
         outputs_list (list): A list of the model outputs for each dropout variation.
         grads_list (list): A list of the gradients for each dropout variation.
     """
-    grads_list = []
-    outputs_list = []
 
-    #for _ in tqdm(range(n)):
-    for model_path in tqdm(os.listdir(model_dir)):
-        #model = Model(
-        #    inputs=[model.inputs],
-        #    outputs=[model.output],
-        #)
-        model = tf.keras.models.load_model(os.path.join(model_dir, model_path))
-        with tf.GradientTape() as tape:
-            inputs = tf.cast(inputs, tf.float32)
-            tape.watch(inputs)
-            outputs = model(inputs)
-            if output_mask is not None:
-                outputs = outputs * output_mask[None, :, :, None, None]
-                
-            outputs_loss = outputs * repeat(
-                active_grid_cells, "n h w 1 l -> n h w c l", c=3
-            )
-            loss = tf.reduce_mean(outputs_loss[0, :, :, 2:, leadtime - 1])
+    with tf.GradientTape() as tape:
+        inputs = tf.cast(inputs, tf.float32)
+        tape.watch(inputs)
+        outputs = model(inputs)
+        if output_mask is not None:
+            outputs = outputs * output_mask[None, :, :, None, None]
+        outputs_loss = outputs * repeat(
+            active_grid_cells, "n h w 1 l -> n h w c l", c=3
+        )
+        loss = tf.reduce_mean(outputs_loss[0, :, :, 2:, leadtime - 1])
 
-        outputs_list.append(outputs_loss)
-        grads = tape.gradient(loss, inputs)[0]
+    grads = tape.gradient(loss, inputs)[0]
+    grads = np.array(grads)
 
-        grads = np.array(grads)
-        grads_list.append(grads)
-
-    return outputs_list, grads_list
+    return outputs, grads
 
 
 def integrated_gradient_dropout_ensemble(

@@ -11,7 +11,7 @@ import config
 import utils
 import time
 import argparse
-from experimental.guided_backprop import guided_backprop_dropout_ensemble, gradient_dropout_ensemble, integrated_gradient_dropout_ensemble
+from experimental.explainability import guided_backprop_dropout_ensemble, gradient_dropout_ensemble, integrated_gradient_dropout_ensemble
 from experimental.utils import load_icenet_model
 from experimental.config import REGION_MASK_PATH, LAND_MASK_PATH
 
@@ -90,7 +90,7 @@ dataloader = utils.IceNetDataLoader(dataloader_config_fpath)
 # List variable names in order of appearance as in Figure 7
 all_ordered_variable_names = dataloader.determine_variable_names()
 leadtimes = np.arange(1, n_forecast_months + 1)
-model_numbers = ["model" for _ in range(dropout_sample_size)]
+model_numbers = ["model" + str(i) for i in range(dropout_sample_size)]
 
 # All dates for which we want to make a forecast
 target_dates = pd.date_range(start=start_date, end=end_date, freq="MS")
@@ -104,12 +104,13 @@ init_dates = pd.date_range(
 
 # Create DataFrame for storing results
 multi_index = pd.MultiIndex.from_product(
-    [all_ordered_variable_names, model_numbers, leadtimes, target_dates],
+    [model_numbers, leadtimes, target_dates, all_ordered_variable_names],
     names=["Model number", "Leadtime", "Forecast date", "Variable"],
 )
+
 results_df = pd.DataFrame(
     index=multi_index, columns=["Feature importance"], dtype=np.float32
-)
+).sort_index()
 
 # Load model
 model = load_icenet_model(False)
@@ -128,7 +129,9 @@ print("Done.\n\n")
 
 # Iterate over all models and forecast dates
 for dat_i, target_date in tqdm(enumerate(target_dates), total=len(target_dates)):
+    print(f"Forecasting for {target_date}...")
     for leadtime in leadtimes:
+        print(f"Leadtime {leadtime}...")
         inputs = inputs_list[dat_i + 6 - leadtime][None, ...]
         active_grid_cells = active_grid_cells_list[dat_i + 6 - leadtime]
         ###
@@ -153,11 +156,13 @@ for dat_i, target_date in tqdm(enumerate(target_dates), total=len(target_dates))
             for model_number in tqdm(range(dropout_sample_size), leave=False):
                 feature_importance = feature_importance_list[model_number][..., var_i]
                 aggregated_feature_importance = aggregate_features(feature_importance)
-                results_df.loc[
-                    model_number, leadtime, target_date, varname
-                ] = aggregated_feature_importance
+                idx = (model_numbers[model_number], leadtime, target_date, varname)
+                results_df.loc[idx, "Feature importance"] = aggregated_feature_importance
+                #results_df.loc[
+                #    model_number, leadtime, target_date, varname
+                #] = aggregated_feature_importance
         
-    print("\nDone.\n")
+    print("Done with forecast date ", target_date)
 
 # Save results
 os.makedirs(os.path.dirname(results_df_fpath), exist_ok=True)

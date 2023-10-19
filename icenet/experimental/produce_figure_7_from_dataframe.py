@@ -21,7 +21,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 dataloader_ID = "2021_06_15_1854_icenet_nature_communications"
 figure_destionation_folder = "icenet/experimental/figures"
 results_folder = "icenet/experimental/results"
-filename = "landmask_sum_guided_backprop.csv"
+filename = "feature_importance_270423_16:03.csv"
 
 ### Load results dataframe
 ####################################################################
@@ -32,9 +32,9 @@ dataloader_config_fpath = os.path.join(
 dataloader = utils.IceNetDataLoader(dataloader_config_fpath)
 results_df = pd.read_csv(os.path.join(results_folder, filename))
 
-# To only look at June forecasts, uncomment the following lines
-#test = results_df["Forecast date"].str.contains("06-01") + results_df["Variable"].str.contains("06-01")
-#results_df = results_df[test]
+# To only look at September forecasts, uncomment the following lines
+test = results_df["Forecast date"].str.contains("09-01") + results_df["Variable"].str.contains("09-01")
+results_df = results_df[test]
 
 ### Produce Figure 7
 ####################################################################
@@ -58,14 +58,9 @@ mean_results_heatmap = (
 
 # Scale heatmap values
 #mean_results_heatmap -= np.min(mean_results_heatmap.values, axis=0)
-#mean_results_heatmap /= np.max(mean_results_heatmap.values[:, :-1])
-#mean_results_heatmap *= 11
-from experimental.config import LAND_MASK_PATH, REGION_MASK_PATH
-n = np.sum(~np.load(LAND_MASK_PATH))
-#n = np.sum(np.load(REGION_MASK_PATH) == 5)
-mean_results_heatmap /= (n*5e-7)
-
-
+#mean_results_heatmap /= np.max(mean_results_heatmap.values, axis=0)
+#mean_results_heatmap /= np.max(mean_results_heatmap.values)
+mean_results_heatmap /= mean_results_heatmap.loc["cos(month)", 3]
 # Reset index to make variable names appear in the heatmap
 mean_results_df = mean_results_df.reset_index()
 
@@ -101,8 +96,8 @@ with plt.rc_context(
         cmap="RdBu_r",
         center=0.0,
         cbar_kws=cbar_kws,
-        vmax=.5,
-        vmin=-.5,
+        vmax=1.0,
+        vmin=-1.0,
         cbar_ax=cax,
     )
     ax.set_xlabel("Lead time (months)")

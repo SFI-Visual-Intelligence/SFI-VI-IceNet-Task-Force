@@ -27,16 +27,17 @@ path_to_file = "./icenet/experimental/results/spatial_heatmap_290323_16:20.npz" 
 path_to_forecast = "./icenet/experimental/results/spatial_forecasts_290323_16:20.npz" # december 2012 forecast HBS
 path_to_heatmap = "./icenet/experimental/results/spatial_heatmap_190423_09:17.npz" # september 2013 extreme event
 path_to_forecast = "./icenet/experimental/results/spatial_forecasts_190423_09:17.npz" # september 2013 extreme event
-path_to_heatmap = "spatial_heatmap_240423_13:19.npz" # june 1999 hbs no sea ice
-path_to_forecast = "./icenet/experimental/results/spatial_forecasts_240423_13:19.npz" # june 1999 hbs no sea ice
-path_to_heatmap = "./icenet/experimental/results/spatial_heatmap_240423_13:24.npz" # june 2009 hbs sic
-path_to_forecast = "./icenet/experimental/results/spatial_forecasts_240423_13:24.npz" # june 2009 hbs sic
+#path_to_heatmap = "spatial_heatmap_240423_13:19.npz" # june 1999 hbs no sea ice
+#path_to_forecast = "./icenet/experimental/results/spatial_forecasts_240423_13:19.npz" # june 1999 hbs no sea ice
+#path_to_heatmap = "./icenet/experimental/results/spatial_heatmap_240423_13:24.npz" # june 2009 hbs sic
+#path_to_forecast = "./icenet/experimental/results/spatial_forecasts_240423_13:24.npz" # june 2009 hbs sic
+#path_to_heatmap = "./icenet/experimental/results/spatial_heatmap_100523_14:39.npz" # september 2013 extreme mask, ensemble
+#path_to_forecast = "./icenet/experimental/results/spatial_forecasts_100523_14:39.npz" # september 2013 extreme mask, ensemble
 img = np.load(path_to_heatmap)["arr_0"]
 forecast = np.load(path_to_forecast)["arr_0"]
 ########################################################################################
 ########################################################################################
 ########################################################################################
-
 
 ########################################################################################
 ### load variable names ################################################################
@@ -67,7 +68,6 @@ init_dates = pd.date_range(start="1980-01-01", end="2021-12-01", freq="YS")
 for init_date in init_dates:
     inputs, _, _ = dataloader.data_generation(init_date)
     sics = inputs[0, :, :, :]
-
     fig, axs = plt.subplots(3, 4, figsize=(15, 10))
     for i, ax in enumerate(axs.flatten()):
         ax.imshow(sics[:, :, 11 - i], cmap="Blues", vmin=0, vmax=1)
@@ -75,8 +75,8 @@ for init_date in init_dates:
         ax.set_title(months[i])
         ax.axis("off")
     fig.suptitle(f"SIC for {init_date.year - 1}", fontsize=20)
-    plt.savefig(f"icenet/experimental/figures/sic_{init_date.year - 1}.png", dpi=300)
-
+    #plt.savefig(f"icenet/experimental/figures/sic_{init_date.year - 1}.png", dpi=300)
+    plt.show()
 
 active_grid_cells = []
 for date in pd.date_range(start="2012-01-01", end="2012-12-01", freq="MS"):
@@ -260,10 +260,10 @@ plt.show()
 ########################################################################################
 ### plot spatial feature importance for all variables for a selected leadtime ##########
 ########################################################################################
-leadtime = 4
+leadtime = 1
 
-variables = np.arange(18, 47)
-variables = [21, 22, 23] + [30, 31, 32]
+variables = np.arange(0, 47)
+#variables = [21, 22, 23] + [30, 31, 32]
 
 img_reduced = img[variables, :, :, leadtime-1]
 variable_names_reduced = all_ordered_variable_names[variables]
