@@ -123,8 +123,7 @@ print("Done.")
 n_forecast_months = dataloader.config["n_forecast_months"]
 
 # Need to shorten prediction to avoid memory issues
-#heldout_start = pd.Timestamp('2012-01-01')
-heldout_start = pd.Timestamp('2016-01-01')
+heldout_start = pd.Timestamp('2012-01-01')
 heldout_end = pd.Timestamp('2020-12-01')
 
 all_target_dates = pd.date_range(start=heldout_start, end=heldout_end, freq="MS")
