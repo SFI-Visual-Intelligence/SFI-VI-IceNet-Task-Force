@@ -2,9 +2,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import icenet.experimental.config as config
 import cv2
 
+LAND_MASK_PATH = "./icenet/experimental/masks/land_mask.npy"
 
 def createHudsonBaySystemImage():
     """
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     plt.show()
 
 
-def createLandEdgeImage(land_mask=np.load(config.LAND_MASK_PATH), method="sobel"):
+def createLandEdgeImage(land_mask=np.load(LAND_MASK_PATH), method="sobel"):
     """
     Create an image of land edges.
     """
