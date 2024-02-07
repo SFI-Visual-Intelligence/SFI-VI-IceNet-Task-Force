@@ -1,0 +1,39 @@
+---
+kind: job
+apiVersion: batch/v1
+metadata:
+  name: icenet-explainability-1
+spec:
+  template:
+    spec:
+      hostIPC: true
+      containers:
+      - name: icenetcontainer-iver
+        image: "halyjo/icenetimage:madeonmac-v01"
+        workingDir: /storage/IceNet/repository/
+        command: ["/bin/bash", "-c"]
+        args: [
+          source activate icenet && 
+          pip install omegaconf && 
+          pip install einops && 
+          python icenet/experimental/visualize_table_from_heatmap.py
+          --heatmap "./icenet/experimental/results/spatial_heatmap_250124_11_14.npz"
+          --destination_folder "./icenet/experimental/results/"
+          #python icenet/experimental/create_heamaps_ensemble.py 
+          #--output_mask "./icenet/experimental/masks/2013_extreme_mask.npy"
+          #--target_date "2013-09-01"
+          #--path_to_ensembles "./trained_networks/2021_06_15_1854_icenet_nature_communications/unet_tempscale/networks"
+          #--absolute_gradients True
+          ]
+        stdin: true
+        tty: true
+        volumeMounts:
+        - name: storage
+          mountPath: /storage
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: storage
+      restartPolicy: OnFailure
+  backoffLimit: 0
+...
